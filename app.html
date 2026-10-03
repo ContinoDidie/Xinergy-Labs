@@ -282,39 +282,24 @@ a{color:inherit;text-decoration:none}
   });
 </script>
 <script>
-  // --- MODO DIAGNÓSTICO v3 (quitar los avisos cuando funcione) ---
-  function dbg(msg) {
-    try { if (window.Telegram && Telegram.WebApp && Telegram.WebApp.showAlert) { Telegram.WebApp.showAlert(String(msg)); return; } } catch (e) {}
-    alert(String(msg));
-  }
-  window.addEventListener('error', function (e) { dbg('DIAG JS ERROR: ' + e.message); });
-
-  dbg('DIAG v3 cargada. Supabase SDK: ' + (window.supabase ? 'ok' : 'NO') + ' | Telegram SDK: ' + (window.Telegram ? 'ok' : 'NO'));
-
   const SUPABASE_URL = 'https://kigkkjpvtnsjalhvyoaz.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp';
 
   const tg = window.Telegram && window.Telegram.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
 
+  // Registra al usuario: el servidor valida la firma de Telegram (initData)
   async function syncTelegramUser() {
-    if (!window.supabase) { dbg('DIAG: no cargó el SDK de Supabase'); return; }
-    if (!tg || !tg.initData) { dbg('DIAG: initData vacío. Abre la MiniApp desde el bot.'); return; }
+    if (!window.supabase || !tg || !tg.initData) return;
 
     try {
       const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      const { data, error } = await supabaseClient.functions.invoke('telegram-auth', {
+      const { error } = await supabaseClient.functions.invoke('telegram-auth', {
         body: { initData: tg.initData }
       });
-      if (error) {
-        let detalle = error.message;
-        try { detalle += ' | ' + JSON.stringify(await error.context.json()); } catch (e) {}
-        dbg('DIAG ERROR: ' + detalle);
-      } else {
-        dbg('DIAG OK: ' + JSON.stringify(data));
-      }
+      if (error) console.error('Error al registrar usuario:', error.message);
     } catch (err) {
-      dbg('DIAG RED: ' + err);
+      console.error('Error de red/conexión:', err);
     }
   }
 
