@@ -1,658 +1,330 @@
 <!DOCTYPE html>
-
 <html lang="es">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
 <title>Xinergy Labs | MiniApp</title>
-
 <link rel="preconnect" href="https://fonts.googleapis.com">
-
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet">
-
 <style>
-
 :root{
-
   --bg:#05070b;--panel:rgba(16,22,31,.78);--line:rgba(255,255,255,.09);
-
   --green:#00ff66;--cyan:#00e5ff;--purple:#9d00ff;
-
   --text:#f4f7fa;--muted:#9aa8b6;
-
   --glow:rgba(0,255,102,.35);
-
   --head:'Chakra Petch','Segoe UI',system-ui,sans-serif;
-
   --body:'Manrope','Segoe UI',system-ui,-apple-system,sans-serif;
-
 }
-
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 html{color-scheme:dark}
-
 body{background:var(--bg);color:var(--text);font-family:var(--body);line-height:1.5;min-height:100vh;display:flex;justify-content:center;overflow-x:hidden;
-
   background-image:radial-gradient(60% 35% at 85% 0%,rgba(157,0,255,.2),transparent),radial-gradient(50% 35% at 0% 40%,rgba(0,229,255,.1),transparent),
-
   linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-
   background-size:100% 100%,100% 100%,36px 36px,36px 36px;background-attachment:fixed}
-
 h1,h2,h3{font-family:var(--head)}
-
 button{font-family:inherit;color:inherit}
-
 :focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}
-
 .app{width:100%;max-width:430px;padding:0 16px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
-
 .grad{background:linear-gradient(90deg,var(--green),var(--cyan) 55%,var(--purple));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
-
-
 /* HEADER */
-
 header{display:flex;flex-direction:column;align-items:center;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) 0 18px;text-align:center;border-bottom:1px solid var(--line)}
-
 .wallet-row{width:100%;display:flex;justify-content:flex-end}
-
 .brand-logo{width:84px;height:84px;border-radius:50%;box-shadow:0 0 0 2px rgba(0,229,255,.35),0 0 26px rgba(0,229,255,.35),0 0 44px rgba(255,0,85,.22)}
-
 .neon{font-size:clamp(1.6rem,8vw,2.1rem);font-weight:700;letter-spacing:.16em;line-height:1.1;padding-left:.16em;
-
   background:linear-gradient(90deg,#2f6bff 0%,#00e5ff 42%,#ff2d7a 78%,#ff0033 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-
   filter:drop-shadow(0 0 7px rgba(0,229,255,.6)) drop-shadow(0 0 18px rgba(255,0,85,.4))}
-
 .tagline{color:var(--muted);font-size:.78rem;letter-spacing:.22em;text-transform:uppercase}
-
 .tagline::after{content:'';display:block;width:120px;height:2px;margin:12px auto 0;border-radius:2px;background:linear-gradient(90deg,transparent,#2f6bff,#00e5ff,#ff0055,transparent);box-shadow:0 0 12px rgba(0,229,255,.55)}
-
 .btn-wallet{flex:none;background:rgba(0,229,255,.07);border:1px solid var(--cyan);color:var(--cyan);padding:8px 14px;border-radius:99px;font-family:var(--head);font-weight:600;font-size:.82rem;cursor:pointer;transition:background .25s,color .25s,box-shadow .25s}
-
 .btn-wallet:hover{background:var(--cyan);color:#021016;box-shadow:0 0 18px rgba(0,229,255,.35)}
-
 .btn-wallet.on{border-color:var(--green);color:var(--green);background:rgba(0,255,102,.08)}
 
-
-
 /* TARJETAS */
-
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:relative;overflow:hidden}
-
 .card.top::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple))}
-
 .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-
 .card-head h2{font-size:1rem;font-weight:600}
-
 .live{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--green);font-weight:700}
-
 .live::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);animation:blink 2s ease-in-out infinite}
-
 @keyframes blink{50%{opacity:.35}}
 
-
-
 /* ANILLOS */
-
 .metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center}
-
 .ring{position:relative;width:112px;height:112px;margin:0 auto 10px}
-
 .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
-
 .ring circle{fill:none;stroke-width:7;stroke-linecap:round}
-
 .ring .bg{stroke:rgba(255,255,255,.08)}
-
 .ring .fg{stroke:var(--green);stroke-dasharray:276.46;stroke-dashoffset:276.46;transition:stroke-dashoffset 1s cubic-bezier(.2,.7,.2,1);filter:drop-shadow(0 0 5px var(--glow))}
-
 .ring.cy .fg{stroke:var(--cyan);filter:drop-shadow(0 0 5px rgba(0,229,255,.4))}
-
 .ring .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-
 .ring .val{font-family:var(--head);font-size:1.35rem;font-weight:700;line-height:1.1}
-
 .ring .sub{font-size:.72rem;color:var(--muted)}
-
 .m-label{font-size:.8rem;color:var(--muted)}
-
 .m-tag{font-family:var(--head);font-weight:600;font-size:.95rem;color:var(--green);margin-top:2px}
-
 .m-tag.cy{color:var(--cyan)}
 
-
-
 /* CTA */
-
 .btn-sync{width:100%;padding:15px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--green),#00b347);color:#021006;font-family:var(--head);font-weight:700;font-size:1.02rem;cursor:pointer;box-shadow:0 0 28px var(--glow);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s,box-shadow .25s,opacity .2s}
-
 .btn-sync:hover{transform:translateY(-2px);box-shadow:0 0 36px rgba(0,255,102,.55)}
-
 .btn-sync:disabled{opacity:.75;cursor:wait;transform:none}
 
-
-
 /* PROTOCOLOS */
-
 .sec-bar{display:flex;justify-content:space-between;align-items:baseline;margin:4px 2px 10px}
-
 .sec-bar h2{font-size:1rem;font-weight:600}
-
 .sec-bar span{font-size:.78rem;color:var(--muted)}
-
 .types{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-
 .type{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 6px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;transition:border-color .25s,box-shadow .25s,transform .2s}
-
 .type:hover{transform:translateY(-2px)}
-
 .type[aria-pressed=true]{border-color:var(--green);box-shadow:0 0 22px rgba(0,255,102,.2);background:linear-gradient(160deg,rgba(0,255,102,.12),rgba(157,0,255,.08)),var(--panel)}
-
 .type svg{width:26px;height:26px;fill:none;stroke:var(--muted);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-bottom:8px;transition:stroke .25s}
-
 .type[aria-pressed=true] svg{stroke:var(--green)}
-
 .type b{font-family:var(--head);font-size:.82rem;font-weight:600}
-
 .type span{font-size:.72rem;color:var(--green);margin-top:3px}
 
-
-
 /* BALANCE */
-
 .balance{display:flex;justify-content:space-between;align-items:center;gap:12px}
-
 .balance::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--green),var(--cyan))}
-
 .b-title{font-size:.75rem;color:var(--muted)}
-
 .b-val{font-family:var(--head);font-size:1.7rem;font-weight:700;line-height:1.15;margin-top:2px}
-
 .b-val span{font-size:1rem}
-
 .life{text-align:right}
-
 .life .b-val{font-size:1.1rem;color:var(--green)}
 
-
-
 /* ACORDEONES */
-
 .acc-btn{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:0;cursor:pointer;text-align:left}
-
 .acc-btn h3{font-size:.98rem;font-weight:600}
-
 .acc-icon{color:var(--green);font-size:.8rem;transition:transform .3s}
-
 .acc-btn[aria-expanded=true] .acc-icon{transform:rotate(180deg)}
-
 .acc{max-height:0;overflow:hidden;transition:max-height .35s ease,margin-top .35s ease;font-size:.88rem;color:var(--muted)}
-
 .acc.open{max-height:260px;margin-top:12px;border-top:1px solid var(--line);padding-top:6px}
-
 .row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
-
 .row:last-child{border-bottom:0}
-
 .row em{font-style:normal;color:var(--green);font-weight:700;white-space:nowrap}
-
 .row.me{color:var(--text)}
 
-
-
 /* FOOTER */
-
 footer{margin-top:8px;padding-top:22px;border-top:1px solid rgba(0,255,102,.22);color:var(--muted);font-size:.86rem}
-
 .f-brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-
 .f-brand img{width:36px;height:36px;border-radius:50%;box-shadow:0 0 12px var(--glow)}
-
 .f-brand h3{font-size:1.1rem;letter-spacing:.14em;background:linear-gradient(90deg,var(--green),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-
 .f-desc{line-height:1.6;margin-bottom:20px}
-
 .f-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-
 footer h4{font-family:var(--head);color:var(--text);font-size:.92rem;display:inline-block;padding-bottom:5px;margin-bottom:12px;border-bottom:2px solid;border-image:linear-gradient(90deg,var(--green),var(--cyan)) 1}
-
 .f-links{display:flex;flex-direction:column;gap:9px}
-
 footer a{transition:color .2s}
-
 footer a:hover{color:var(--green)}
-
 footer a.tg{color:var(--cyan);font-weight:700}
-
 .f-bottom{margin-top:24px;padding-top:16px;border-top:1px solid var(--line);text-align:center;font-size:.76rem;line-height:1.9}
-
 .f-bottom strong{color:var(--green)}
-
 a{color:inherit;text-decoration:none}
-
 /* TOAST */
-
 .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translate(-50%,-14px);max-width:calc(100% - 32px);background:rgba(10,16,14,.95);border:1px solid var(--green);color:var(--green);padding:11px 18px;border-radius:99px;font-size:.84rem;font-weight:700;text-align:center;box-shadow:0 0 22px var(--glow);opacity:0;visibility:hidden;transition:all .3s;z-index:50}
-
 .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
-
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
 </style>
-
 <!-- SDK de Telegram WebApp -->
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
 <!-- SDK cliente de Supabase -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 </head>
-
 <body>
-
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-
-
 <div class="app">
-
   <header>
-
     <div class="wallet-row"><button class="btn-wallet" id="walletBtn" onclick="connectPhantom()">⚡ Conectar wallet</button></div>
-
     <img class="brand-logo" src="data:image/webp;base64,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" alt="Xinergy Labs" width="84" height="84">
-
     <h1 class="neon">XINERGY LABS</h1>
-
     <div class="tagline">Mover · Ganar · Evolucionar</div>
-
   </header>
 
-
-
   <section class="card top" aria-label="Entrenamiento activo">
-
     <div class="card-head"><h2>Entrenamiento activo</h2><span class="live">En vivo</span></div>
-
     <div class="metrics">
-
       <div>
-
         <div class="ring"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="stepRing" cx="50" cy="50" r="44"/></svg>
-
           <div class="in"><span class="val" id="stepCounter">8,421</span><span class="sub">pasos</span></div></div>
-
         <div class="m-label">Máx. diario: 20,000</div>
-
         <div class="m-tag">+42.10 $XLABS</div>
-
       </div>
-
       <div>
-
         <div class="ring cy"><svg viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="44"/><circle class="fg" id="kcalRing" cx="50" cy="50" r="44"/></svg>
-
           <div class="in"><span class="val">485</span><span class="sub">kcal</span></div></div>
-
         <div class="m-label">Meta: 700 kcal</div>
-
         <div class="m-tag cy">Tiempo: 42 min</div>
-
       </div>
-
     </div>
-
   </section>
-
-
 
   <button class="btn-sync" id="syncBtn">🔄 Sincronizar pasos (+1000)</button>
 
-
-
   <div>
-
     <div class="sec-bar"><h2>Tipos de entrenamiento</h2><span>3 protocolos</span></div>
-
     <div class="types">
-
       <button class="type" aria-pressed="true" onclick="selectProtocol(this)">
-
         <svg viewBox="0 0 24 24"><path d="M13 4A2 2 0 1 0 13 0A2 2 0 1 0 13 4Z"/><path d="M13.8 8.2L16.2 6.6C16.8 6.2 17.6 6.4 18 7C18.4 7.6 18.2 8.4 17.6 8.8L14.6 10.8C14 11.2 13.2 11 12.8 10.4L11.8 8.8L8.6 11.2L10.2 15C10.4 15.6 10.2 16.4 9.6 16.8L5.8 19.2C5.2 19.6 4.4 19.4 4 18.8C3.6 18.2 3.8 17.4 4.4 17L7.6 15L6.4 12C6.2 11.4 6.4 10.6 7 10.2L11.4 7C11.8 6.6 12.4 6.6 12.8 6.8L13.8 8.2Z"/></svg>
-
         <b>Carrera</b><span>4 XP/min</span></button>
-
       <button class="type" aria-pressed="false" onclick="selectProtocol(this)">
-
         <svg viewBox="0 0 24 24"><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 6h2l2.5 5M12 17.5V14l-3-3 4-3 2 3h3.5"/></svg>
-
         <b>Ciclismo</b><span>3 XP/min</span></button>
-
       <button class="type" aria-pressed="false" onclick="selectProtocol(this)">
-
         <svg viewBox="0 0 24 24"><path d="M2 10h2v4H2zM20 10h2v4h-2zM6 8h2v8H6zM16 8h2v8h-2zM8 11h8v2H8z"/></svg>
-
         <b>Pesas</b><span>5 XP/min</span></button>
-
     </div>
-
   </div>
 
-
-
   <section class="card">
-
     <button class="acc-btn" aria-expanded="false" onclick="toggleAccordion('historyContent', this)">
-
       <h3>Mi historial de entrenamientos</h3><span class="acc-icon">▼</span></button>
-
     <div class="acc" id="historyContent">
-
       <div class="row"><span>Ayer · Carrera 5K</span><em>+24.5 $XLABS</em></div>
-
       <div class="row"><span>18 Oct · Pesas (30 min)</span><em>+18.0 $XLABS</em></div>
-
     </div>
-
   </section>
-
-
 
   <section class="card balance" aria-label="Balance de tokens">
-
     <div><div class="b-title">Balance de token $XLABS</div><div class="b-val" id="tokenBalance">1,260 <span class="grad">$XLABS</span></div></div>
-
     <div class="life"><div class="b-title">Acumulado histórico</div><div class="b-val">8,421 $XLABS</div></div>
-
   </section>
-
-
 
   <section class="card">
-
     <button class="acc-btn" aria-expanded="false" onclick="toggleAccordion('leaderContent', this)">
-
       <h3>Top 5 clasificación</h3><span class="acc-icon">▼</span></button>
-
     <div class="acc" id="leaderContent">
-
       <div class="row"><span>1. CyberRunner_99</span><em>45,210 $XLABS</em></div>
-
       <div class="row"><span>2. NeonFit</span><em>38,900 $XLABS</em></div>
-
       <div class="row me"><span>3. Alex_Xinergy (Tú)</span><em>8,421 $XLABS</em></div>
-
     </div>
-
   </section>
 
-
-
   <footer>
-
     <div class="f-brand"><img src="data:image/webp;base64,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" alt="" width="36" height="36"><h3>XINERGY LABS</h3></div>
-
     <p class="f-desc">Ropa deportiva táctica, ciberseguridad e integración Web3 de alto rendimiento.</p>
-
     <div class="f-cols">
-
       <div><h4>Ecosistema</h4>
-
         <div class="f-links"><a href="https://xinergylabs.store" target="_blank" rel="noopener">Tienda Oficial</a></div></div>
-
       <div><h4>Comunidad</h4>
-
         <div class="f-links">
-
           <a class="tg" href="https://t.me/xinergylabs" target="_blank" rel="noopener">Telegram</a>
-
           <a href="#" target="_blank" rel="noopener">X (Twitter)</a>
-
           <a href="#" target="_blank" rel="noopener">Instagram</a>
-
         </div></div>
-
     </div>
-
     <div class="f-bottom">
-
       <p>&copy; 2026 Xinergy Labs. Todos los derechos reservados.</p>
-
       <p>Diseñado y desarrollado por <strong>Didié Contino Llanes</strong></p>
-
     </div>
-
   </footer>
-
 </div>
 
-
-
 <script>
-
   var toast=document.getElementById('toast'),toastTimer;
-
   function showToast(msg,ms){
-
     toast.textContent=msg;toast.classList.add('show');
-
     clearTimeout(toastTimer);toastTimer=setTimeout(function(){toast.classList.remove('show')},ms||2500);
-
   }
-
-
 
   // Anillos de progreso
-
   var C=276.46;
-
   function setRing(id,value,max){
-
     document.getElementById(id).style.strokeDashoffset=C*(1-Math.min(value/max,1));
-
   }
-
   var currentBalance=1260,currentSteps=8421;
-
   setTimeout(function(){setRing('stepRing',currentSteps,20000);setRing('kcalRing',485,700)},150);
 
-
-
   // Conexión a Phantom Wallet
-
   async function connectPhantom(){
-
     var btn=document.getElementById('walletBtn');
-
     var ok=window.solana&&window.solana.isPhantom;
-
     if(ok){
-
       try{
-
         btn.textContent='Conectando...';
-
         var res=await window.solana.connect();
-
         var pk=res.publicKey.toString();
-
         btn.textContent='🟢 '+pk.slice(0,4)+'...'+pk.slice(-4);
-
         btn.classList.add('on');
-
       }catch(err){
-
         console.error('Conexión cancelada:',err);
-
         btn.textContent='⚡ Conectar wallet';
-
       }
-
     }else{
-
       showToast('Para conectar tu wallet, abre este enlace desde el navegador interno de Phantom.',4500);
-
     }
-
   }
-
-
 
   // Acordeones
-
   function toggleAccordion(id,btn){
-
     var open=document.getElementById(id).classList.toggle('open');
-
     btn.setAttribute('aria-expanded',open);
-
   }
-
-
 
   // Protocolos
-
   function selectProtocol(el){
-
     document.querySelectorAll('.type').forEach(function(c){c.setAttribute('aria-pressed','false')});
-
     el.setAttribute('aria-pressed','true');
-
   }
-
-
 
   // Sincronización de pasos
-
   var syncBtn=document.getElementById('syncBtn');
-
   syncBtn.addEventListener('click',function(){
-
     syncBtn.textContent='⏳ Sincronizando...';
-
     syncBtn.disabled=true;
-
     setTimeout(function(){
-
       currentBalance+=5;currentSteps+=1000;
-
       document.getElementById('tokenBalance').innerHTML=currentBalance.toLocaleString()+' <span class="grad">$XLABS</span>';
-
       document.getElementById('stepCounter').textContent=currentSteps.toLocaleString();
-
       setRing('stepRing',currentSteps,20000);
-
       showToast('⚡ +1,000 pasos reclamados (+5 $XLABS)');
-
       syncBtn.textContent='🔄 Sincronizar pasos (+1000)';
-
       syncBtn.disabled=false;
-
     },600);
-
   });
-
 </script>
-
 <script>
-
   // Credenciales de Supabase (clave publishable: segura para el cliente si activas RLS)
-
   const SUPABASE_URL = 'https://kigkkjpvtnsjalhvyoaz.supabase.co';
-
   const SUPABASE_KEY = 'Sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp';
 
-
-
   // Inicializar cliente (nombre distinto a "supabase" para no chocar con el SDK global)
-
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-
-
   // Inicializar SDK de Telegram WebApp
-
   const tg = window.Telegram && window.Telegram.WebApp;
-
   if (tg) { tg.ready(); tg.expand(); }
 
-
-
-  // Obtener datos del usuario de Telegram
-
-  const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
-
-
-
-  // Sincronizar usuario con Supabase
-
-  async function syncTelegramUser() {
-
-    if (!tgUser) {
-
-      console.log('No se detectó un usuario de Telegram activo.');
-
-      return;
-
-    }
-
-
-
-    try {
-
-      const { error } = await supabaseClient
-
-        .from('users')
-
-        .upsert({
-
-          telegram_id: tgUser.id,
-
-          first_name: tgUser.first_name || '',
-
-          username: tgUser.username || ''
-
-        }, { onConflict: 'telegram_id' });
-
-
-
-      if (error) {
-
-        console.error('Error al guardar en Supabase:', error.message);
-
-      } else {
-
-        console.log('Usuario registrado/actualizado en Supabase con éxito.');
-
-      }
-
-    } catch (err) {
-
-      console.error('Error de red/conexión:', err);
-
-    }
-
+  // --- MODO DIAGNÓSTICO: muestra avisos en pantalla (quitar cuando funcione) ---
+  function dbg(msg) {
+    try { if (tg && tg.showAlert) { tg.showAlert(String(msg)); return; } } catch (e) {}
+    alert(String(msg));
   }
 
+  // Registrar usuario: el servidor valida la firma de Telegram (initData)
+  async function syncTelegramUser() {
+    if (!tg || !tg.initData) {
+      dbg('DIAG: initData vacío. Abre la MiniApp desde el bot de Telegram.');
+      return;
+    }
 
+    try {
+      const { data, error } = await supabaseClient.functions.invoke('telegram-auth', {
+        body: { initData: tg.initData }
+      });
+
+      if (error) {
+        let detalle = error.message;
+        try { detalle += ' | ' + JSON.stringify(await error.context.json()); } catch (e) {}
+        dbg('DIAG ERROR: ' + detalle);
+      } else {
+        dbg('DIAG OK: ' + JSON.stringify(data));
+      }
+    } catch (err) {
+      dbg('DIAG RED: ' + err);
+    }
+  }
 
   // Ejecutar al cargar la app
-
   document.addEventListener('DOMContentLoaded', syncTelegramUser);
-
 </script>
-
 </body>
-
 </html>
-
