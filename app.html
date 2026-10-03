@@ -123,6 +123,10 @@ a{color:inherit;text-decoration:none}
 .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
+<!-- SDK de Telegram WebApp -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- SDK cliente de Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -202,7 +206,7 @@ a{color:inherit;text-decoration:none}
         <div class="f-links"><a href="https://xinergylabs.store" target="_blank" rel="noopener">Tienda Oficial</a></div></div>
       <div><h4>Comunidad</h4>
         <div class="f-links">
-          <a class="tg" href="https://t.me/XinergyLabsAnuncios" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 3.4 2.9 10.6c-1 .4-1 1.1-.2 1.3l4.8 1.5 1.8 5.6c.2.6.4.8.9.8.4 0 .6-.2.9-.5l2.3-2.2 4.7 3.5c.9.5 1.5.2 1.7-.8l3.1-14.6c.3-1.2-.4-1.8-1.5-1.3zM9 13.2l9.2-5.7c.4-.3.8-.1.5.2l-7.6 6.9-.3 3.2z"/></svg>Telegram</a>
+          <a class="tg" href="https://t.me/xinergylabs" target="_blank" rel="noopener">Telegram</a>
           <a href="#" target="_blank" rel="noopener">X (Twitter)</a>
           <a href="#" target="_blank" rel="noopener">Instagram</a>
         </div></div>
@@ -276,6 +280,50 @@ a{color:inherit;text-decoration:none}
       syncBtn.disabled=false;
     },600);
   });
+</script>
+<script>
+  // Credenciales de Supabase (clave publishable: segura para el cliente si activas RLS)
+  const SUPABASE_URL = 'https://kigkkjpvtnsjalhvyoaz.supabase.co';
+  const SUPABASE_KEY = 'Sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp';
+
+  // Inicializar cliente (nombre distinto a "supabase" para no chocar con el SDK global)
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // Inicializar SDK de Telegram WebApp
+  const tg = window.Telegram && window.Telegram.WebApp;
+  if (tg) { tg.ready(); tg.expand(); }
+
+  // Obtener datos del usuario de Telegram
+  const tgUser = tg && tg.initDataUnsafe && tg.initDataUnsafe.user;
+
+  // Sincronizar usuario con Supabase
+  async function syncTelegramUser() {
+    if (!tgUser) {
+      console.log('No se detectó un usuario de Telegram activo.');
+      return;
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from('users')
+        .upsert({
+          telegram_id: tgUser.id,
+          first_name: tgUser.first_name || '',
+          username: tgUser.username || ''
+        }, { onConflict: 'telegram_id' });
+
+      if (error) {
+        console.error('Error al guardar en Supabase:', error.message);
+      } else {
+        console.log('Usuario registrado/actualizado en Supabase con éxito.');
+      }
+    } catch (err) {
+      console.error('Error de red/conexión:', err);
+    }
+  }
+
+  // Ejecutar al cargar la app
+  document.addEventListener('DOMContentLoaded', syncTelegramUser);
 </script>
 </body>
 </html>
