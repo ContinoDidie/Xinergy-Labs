@@ -149,6 +149,8 @@ a{color:inherit;text-decoration:none}
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- SDK cliente de Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Captcha (Cloudflare Turnstile) -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </head>
 <body>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -172,6 +174,12 @@ a{color:inherit;text-decoration:none}
       <div class="stat"><span id="refValid">0</span><small>Amigos activos</small></div>
     </div>
     <p class="note">Los XLABS Points son un sistema de recompensas de la comunidad. No son un token ni garantizan ningún valor.</p>
+  </section>
+
+  <section class="card" id="captchaCard" style="display:none">
+    <div class="card-head"><h2>Verificación rápida</h2></div>
+    <p class="muted" style="margin-bottom:12px">Confirma que eres una persona para empezar a ganar puntos.</p>
+    <div id="captchaBox"></div>
   </section>
 
   <section class="card">
@@ -340,8 +348,25 @@ a{color:inherit;text-decoration:none}
     return r.data;
   }
 
+  var captchaWidget=null,captchaTries=0;
+  function showCaptcha(siteKey){
+    $('captchaCard').style.display='';
+    if(captchaWidget!==null||!siteKey)return;
+    if(!window.turnstile){if(captchaTries++<20)setTimeout(function(){showCaptcha(siteKey)},500);return;}
+    captchaWidget=window.turnstile.render('#captchaBox',{sitekey:siteKey,theme:'dark',callback:onCaptcha});
+  }
+  async function onCaptcha(token){
+    try{
+      var d=await call('verify_captcha',{token:token});
+      render(d);
+      if(d.result&&d.result.ok)showToast('Verificación completada ✓');
+      else{showToast('No se pudo verificar. Inténtalo otra vez.');window.turnstile.reset(captchaWidget);}
+    }catch(e){showToast(e.message,4500);if(window.turnstile)window.turnstile.reset(captchaWidget);}
+  }
+
   function render(d){
     state=d;var me=d.me;
+    if(d.captcha&&d.captcha.required)showCaptcha(d.captcha.site_key);else $('captchaCard').style.display='none';
     $('ptsTotal').textContent=fmt(me.total);
     $('ptsRank').textContent='#'+me.rank;
     $('ptsMissions').textContent=fmt(me.mission_points);
@@ -368,6 +393,8 @@ a{color:inherit;text-decoration:none}
       if(res.ok&&!res.already)showToast('+'+res.points+' puntos ⚡');
       else if(res.ok)showToast('Misión ya completada');
       else if(res.reason==='not_member')showToast('Aún no apareces dentro. Únete y vuelve a verificar.',3500);
+      else if(res.reason==='captcha_required')showToast('Completa primero la verificación rápida.',3500);
+      else if(res.reason==='blocked')showToast('Tu cuenta está en revisión.',3500);
       else showToast('No se pudo verificar esta misión.');
     }catch(e){showToast(e.message,4500);btn.disabled=false;btn.textContent=old;}
   }
