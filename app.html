@@ -157,6 +157,11 @@ a{color:inherit;text-decoration:none}
 .manual h3{margin:0 0 2px;font-size:1rem}
 .manual p{margin:0 0 10px}
 .manual .acts{display:flex;gap:8px;flex-wrap:wrap}
+h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
+#runModal{position:fixed;inset:0;background:rgba(5,7,11,.97);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(10px + env(safe-area-inset-top,0px)) 10px calc(10px + env(safe-area-inset-bottom,0px))}
+.run-frame{position:relative;width:min(100%,calc((100vh - 110px) * .5625),420px);width:min(100%,calc((100dvh - 110px) * .5625),420px);aspect-ratio:9/16;border:2px solid var(--cyan);border-radius:18px;overflow:hidden;box-shadow:0 0 30px rgba(0,229,255,.3);background:#05070b}
+#runCanvas{width:100%;height:100%;display:block;touch-action:none}
+.run-ui{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;background:rgba(5,7,11,.84)}
 </style>
 <!-- SDK de Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -168,11 +173,29 @@ a{color:inherit;text-decoration:none}
 <body>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<div id="runModal">
+  <div class="run-frame">
+    <canvas id="runCanvas"></canvas>
+    <div class="run-ui" id="runUi">
+      <h2 id="runTitle" class="grad" style="font-size:1.8rem">XINERGY RUN</h2>
+      <p class="muted" id="runInfo">Desliza a los lados para cambiar de carril, hacia arriba para saltar y hacia abajo para deslizarte.</p>
+      <div id="runStats" style="display:none;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:12px 18px;min-width:70%">
+        <div class="muted">DISTANCIA</div><div id="runDist" style="font-family:var(--head);font-size:1.8rem;font-weight:700">0 m</div>
+        <div class="muted" style="margin-top:6px">MONEDAS XL</div><div id="runCoins" style="font-family:var(--head);font-size:1.8rem;font-weight:700;color:var(--green)">0</div>
+      </div>
+      <button class="btn-sync" id="runStart" style="max-width:240px">Correr</button>
+      <button class="btn-mini" id="runShare" style="display:none;padding:11px 20px">Compartir</button>
+      <button class="btn-mini ghost" id="runClose">Cerrar</button>
+      <p class="note" style="margin-top:6px">Prototipo: las monedas XL no son un token y aún no se guardan en tu cuenta.</p>
+    </div>
+  </div>
+</div>
+
 <div class="app">
   <header>
     <div class="wallet-row"><button class="btn-wallet" id="walletBtn" onclick="connectPhantom()">⚡ Conectar wallet</button></div>
     <img class="brand-logo" src="data:image/webp;base64,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" alt="Xinergy Labs" width="84" height="84">
-    <h1 class="neon">XINERGY LABS</h1>
+    <h1 class="neon">XINERGY<br>LABS</h1>
     <div class="tagline">Mover · Ganar · Evolucionar</div>
   </header>
   <section class="card" id="loginCard" style="display:none">
@@ -235,8 +258,16 @@ a{color:inherit;text-decoration:none}
     <p class="muted">Ganas puntos cuando tu amigo completa las misiones. Pendientes: <b id="refPending">0</b></p>
     <div class="link-box" id="refLink">…</div>
     <div class="invite"><button class="btn-mini" id="btnShare">Compartir</button><button class="btn-mini ghost" id="btnCopy">Copiar enlace</button></div>
+    <button class="btn-mini ghost" id="btnCopyWeb" style="width:100%;margin-top:8px">Copiar enlace para la web</button>
   </section>
 
+
+  <section class="card" id="runCard">
+    <div class="card-head"><h2>Xinergy Run</h2><span class="soon-badge">PROTOTIPO</span></div>
+    <p class="muted">Corre, esquiva obstáculos y recoge monedas XL. Desliza para moverte, saltar y deslizarte.</p>
+    <div class="mission"><div><b>Tu mejor marca</b><small id="runBest">0 m</small></div><div class="m-act"><button class="btn-mini" id="btnRunOpen">Jugar</button></div></div>
+    <p class="note">Las monedas XL son del juego: no son un token y por ahora no se guardan en tu cuenta.</p>
+  </section>
 
   <section class="card" id="manualCard" style="display:none">
     <div class="card-head"><h2>Manual de entrenamiento</h2><span class="soon-badge" id="manBadge" style="display:none">PRÓXIMAMENTE</span></div>
@@ -450,6 +481,18 @@ a{color:inherit;text-decoration:none}
     openTg('https://t.me/share/url?url='+encodeURIComponent(state.me.link)+'&text='+encodeURIComponent('Únete a Xinergy Labs y gana XLABS Points ⚡'));
   });
 
+  $('btnCopyWeb').addEventListener('click',function(){
+    if(!state)return;
+    copyText(location.origin+location.pathname+'?ref='+encodeURIComponent(state.me.code)).then(function(){showToast('Enlace web copiado')},function(){showToast('No se pudo copiar el enlace')});
+  });
+  // Código de referido: en la MiniApp lo firma Telegram; en la web viene en ?ref= y se guarda por si el usuario tarda en entrar
+  function getRefParam(){
+    var r='';
+    if(isMini&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)return tg.initDataUnsafe.start_param;
+    try{r=new URLSearchParams(location.search).get('ref')||''}catch(e){}
+    try{if(r)localStorage.setItem('xl_ref',r);else r=localStorage.getItem('xl_ref')||''}catch(e){}
+    return r;
+  }
   function getSess(){try{return localStorage.getItem('xl_session')||''}catch(e){return ''}}
   function setSess(v){try{v?localStorage.setItem('xl_session',v):localStorage.removeItem('xl_session')}catch(e){}}
   function authBase(){return isMini?{initData:tg.initData}:{session:getSess()}}
@@ -459,10 +502,10 @@ a{color:inherit;text-decoration:none}
     var box=$('tgLogin');if(box.childElementCount)return;
     window.onTelegramAuth=async function(user){
       try{
-        var ref='';try{ref=new URLSearchParams(location.search).get('ref')||''}catch(e){}
+        var ref=getRefParam();
         var r=await sb.functions.invoke('xl-api',{body:{action:'web_login',login:user,start:ref}});
         if(r.error){var m=r.error.message;try{var j=await r.error.context.json();if(j&&j.error)m=j.error}catch(e){}throw new Error(m)}
-        setSess(r.data.session);enter(r.data);
+        setSess(r.data.session);try{localStorage.removeItem('xl_ref')}catch(e){}enter(r.data);
       }catch(e){showToast(e.message,4500)}
     };
     var sc=document.createElement('script');sc.async=true;sc.src='https://telegram.org/js/telegram-widget.js?22';
@@ -489,6 +532,171 @@ a{color:inherit;text-decoration:none}
     }
   }
   init();
+})();
+</script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var tg=window.Telegram&&window.Telegram.WebApp;
+  var modal=$('runModal'),cv=$('runCanvas'),ctx=cv.getContext('2d');
+  var W=360,H=640,HOR=190,PY=520,JD=0.7,SD=0.6;
+  var state='ready',raf=0,last=0,time=0;
+  var lane=0,px=0,jumpT=0,slideT=0,dist=0,coins=0,speed=0.55,objs=[],nextSpawn=18,best=0;
+  try{best=parseInt(localStorage.getItem('xl_run_best')||'0',10)||0}catch(e){}
+  $('runBest').textContent=best+' m';
+
+  function proj(z,l){var t=Math.pow(Math.max(z,0),1.8),half=40+110*t;return{x:W/2+l*half*0.62,y:HOR+(PY-HOR)*t,ls:half*0.62,t:t};}
+  function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function grad(x0,y0,x1,y1,a,b){var g=ctx.createLinearGradient(x0,y0,x1,y1);g.addColorStop(0,a);g.addColorStop(1,b);return g;}
+
+  function spawn(){
+    var r=Math.random(),i,c;
+    if(r<0.42){
+      var free=[-1,0,1],n=Math.random()<0.5?1:2;
+      for(i=0;i<n;i++){objs.push({z:0,lane:free.splice(Math.floor(Math.random()*free.length),1)[0],type:'wall'});}
+      var cl=free[Math.floor(Math.random()*free.length)];
+      for(c=0;c<4;c++)objs.push({z:-0.06*c,lane:cl,type:'coin'});
+    }else if(r<0.62){
+      objs.push({z:0,lane:null,type:'low'});
+      for(c=0;c<3;c++)objs.push({z:-0.17-0.07*c,lane:0,type:'coin'});
+    }else if(r<0.78){
+      objs.push({z:0,lane:null,type:'high'});
+    }else{
+      var l2=[-1,0,1][Math.floor(Math.random()*3)];
+      for(c=0;c<6;c++)objs.push({z:-0.06*c,lane:l2,type:'coin'});
+    }
+  }
+
+  function showUi(title,m,c,over){
+    $('runUi').style.display='flex';$('runTitle').textContent=title;
+    $('runStats').style.display=over?'block':'none';
+    $('runInfo').style.display=over?'none':'block';
+    if(over){$('runDist').textContent=m+' m';$('runCoins').textContent=c;}
+    $('runStart').textContent=over?'Jugar de nuevo':'Correr';
+    $('runShare').style.display=over?'':'none';
+  }
+  function crash(){
+    state='over';var m=Math.floor(dist),nb=m>best;
+    if(nb){best=m;try{localStorage.setItem('xl_run_best',String(best))}catch(e){}}
+    $('runBest').textContent=best+' m';
+    showUi(nb&&m>0?'¡Nueva marca!':'Fin de la carrera',m,coins,true);
+    try{tg&&tg.HapticFeedback&&tg.HapticFeedback.notificationOccurred('error')}catch(e){}
+  }
+  function start(){lane=0;px=0;jumpT=0;slideT=0;dist=0;coins=0;speed=0.55;objs=[];nextSpawn=18;state='run';$('runUi').style.display='none';}
+
+  function update(dt){
+    time+=dt;
+    speed=Math.min(1.0,0.55+dist/1600);
+    dist+=speed*dt*24;
+    px+=(lane-px)*Math.min(1,dt*14);
+    if(jumpT>0){jumpT+=dt;if(jumpT>=JD)jumpT=0;}
+    if(slideT>0)slideT=Math.max(0,slideT-dt);
+    if(dist>=nextSpawn){spawn();nextSpawn=dist+Math.max(15,28-dist/100);}
+    var jy=jumpT>0?Math.sin(Math.PI*jumpT/JD):0;
+    for(var i=objs.length-1;i>=0;i--){
+      var o=objs[i];o.z+=speed*dt;
+      if(o.z>1.2){objs.splice(i,1);continue;}
+      if(o.done||o.z<0.93||o.z>1.04)continue;
+      if(!(o.lane===null||Math.abs(o.lane-px)<0.55))continue;
+      if(o.type==='coin'){o.done=true;coins++;continue;}
+      if(o.type==='wall'||(o.type==='low'&&jy<0.35)||(o.type==='high'&&slideT<=0)){crash();return;}
+      o.done=true;
+    }
+  }
+
+  function drawObj(o){
+    var p=proj(o.z,o.lane===null?0:o.lane),ls=p.ls,lw=Math.max(1,2*p.t+1);
+    if(o.type==='wall'){var w=ls*0.8,h=ls*0.95;rr(p.x-w/2,p.y-h,w,h,6);ctx.fillStyle=grad(0,p.y-h,0,p.y,'#ff2d7a','#9d00ff');ctx.fill();ctx.lineWidth=lw;ctx.strokeStyle='rgba(255,255,255,.65)';ctx.stroke();}
+    else if(o.type==='low'){var w2=ls*2.9,h2=ls*0.3;rr(p.x-w2/2,p.y-h2,w2,h2,4);ctx.fillStyle=grad(0,p.y-h2,0,p.y,'#ffb300','#ff6a00');ctx.fill();ctx.lineWidth=lw;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.stroke();}
+    else if(o.type==='high'){var w3=ls*2.9;ctx.fillStyle='#ff2d7a';ctx.fillRect(p.x-w3/2,p.y-ls*1.15,w3,ls*0.3);ctx.fillRect(p.x-w3/2,p.y-ls*1.15,ls*0.1,ls*1.15);ctx.fillRect(p.x+w3/2-ls*0.1,p.y-ls*1.15,ls*0.1,ls*1.15);ctx.lineWidth=lw;ctx.strokeStyle='rgba(255,255,255,.7)';ctx.strokeRect(p.x-w3/2,p.y-ls*1.15,w3,ls*0.3);}
+    else{var r=ls*0.17,sq=0.35+0.65*Math.abs(Math.cos(time*5+o.z*9));ctx.beginPath();ctx.ellipse(p.x,p.y-ls*0.4,Math.max(1,r*sq),Math.max(1,r),0,0,6.283);ctx.fillStyle='#00ff66';ctx.fill();ctx.lineWidth=lw;ctx.strokeStyle='#eafff2';ctx.stroke();}
+  }
+  function drawPlayer(){
+    var p=proj(1,px),ls=p.ls,x=p.x,y=p.y,jy=jumpT>0?Math.sin(Math.PI*jumpT/JD):0,lift=jy*ls*0.9,run=Math.sin(time*16);
+    ctx.fillStyle='rgba(0,0,0,.45)';ctx.beginPath();ctx.ellipse(x,y+4,ls*0.28*(1-0.4*jy),ls*0.07,0,0,6.283);ctx.fill();
+    ctx.lineCap='round';
+    if(slideT>0){
+      rr(x-ls*0.34,y-ls*0.3-lift,ls*0.68,ls*0.24,ls*0.08);ctx.fillStyle=grad(0,y-ls*0.3,0,y,'#00ff66','#00b347');ctx.fill();
+      ctx.fillStyle='#f4f7fa';ctx.beginPath();ctx.arc(x+ls*0.36,y-ls*0.2-lift,ls*0.1,0,6.283);ctx.fill();
+    }else{
+      ctx.strokeStyle='#00e5ff';ctx.lineWidth=ls*0.1;ctx.beginPath();
+      ctx.moveTo(x-ls*0.07,y-ls*0.42-lift);ctx.lineTo(x-ls*0.07+run*ls*0.14,y-lift);
+      ctx.moveTo(x+ls*0.07,y-ls*0.42-lift);ctx.lineTo(x+ls*0.07-run*ls*0.14,y-lift);ctx.stroke();
+      rr(x-ls*0.14,y-ls*0.86-lift,ls*0.28,ls*0.46,ls*0.08);ctx.fillStyle=grad(0,y-ls*0.86,0,y-ls*0.4,'#00ff66','#00b347');ctx.fill();
+      ctx.strokeStyle='#00ff66';ctx.lineWidth=ls*0.08;ctx.beginPath();
+      ctx.moveTo(x-ls*0.14,y-ls*0.78-lift);ctx.lineTo(x-ls*0.26-run*ls*0.08,y-ls*0.58-lift);
+      ctx.moveTo(x+ls*0.14,y-ls*0.78-lift);ctx.lineTo(x+ls*0.26+run*ls*0.08,y-ls*0.58-lift);ctx.stroke();
+      ctx.fillStyle='#f4f7fa';ctx.beginPath();ctx.arc(x,y-ls*0.97-lift,ls*0.11,0,6.283);ctx.fill();
+    }
+  }
+  function draw(){
+    ctx.setTransform(cv.width/W,0,0,cv.height/H,0,0);
+    ctx.fillStyle=grad(0,0,0,H,'#0b0620','#05070b');ctx.fillRect(0,0,W,H);
+    var rg=ctx.createRadialGradient(W/2,HOR,10,W/2,HOR,230);rg.addColorStop(0,'rgba(0,229,255,.45)');rg.addColorStop(1,'rgba(0,229,255,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+    var k=(H-HOR)/(PY-HOR),bw=40+110*k;
+    ctx.beginPath();ctx.moveTo(W/2-40,HOR);ctx.lineTo(W/2+40,HOR);ctx.lineTo(W/2+bw,H);ctx.lineTo(W/2-bw,H);ctx.closePath();ctx.fillStyle=grad(0,HOR,0,H,'#0c1822','#13212f');ctx.fill();
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(0,255,102,.9)';ctx.beginPath();ctx.moveTo(W/2-40,HOR);ctx.lineTo(W/2-bw,H);ctx.moveTo(W/2+40,HOR);ctx.lineTo(W/2+bw,H);ctx.stroke();
+    ctx.lineWidth=2;ctx.strokeStyle='rgba(255,255,255,.35)';
+    var off=(dist*0.04)%1,s,j,a,b;
+    for(s=-0.5;s<=0.5;s+=1){ctx.beginPath();for(j=0;j<13;j++){var z0=(j+off)/12;if(z0>1.1)continue;a=proj(z0,s);b=proj(z0+0.04,s);ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);}ctx.stroke();}
+    var list=objs.filter(function(o){return o.z>=0;}).sort(function(p,q){return p.z-q.z;});
+    list.forEach(function(o){if(o.z<=1)drawObj(o);});
+    drawPlayer();
+    list.forEach(function(o){if(o.z>1)drawObj(o);});
+    ctx.fillStyle='rgba(5,7,11,.6)';rr(10,10,130,34,10);ctx.fill();rr(W-140,10,130,34,10);ctx.fill();
+    ctx.font='700 16px system-ui,sans-serif';ctx.fillStyle='#fff';ctx.fillText(Math.floor(dist)+' m',22,33);
+    ctx.beginPath();ctx.arc(W-126,27,7,0,6.283);ctx.fillStyle='#00ff66';ctx.fill();ctx.fillStyle='#fff';ctx.fillText(String(coins),W-110,33);
+  }
+  function loop(ts){
+    raf=requestAnimationFrame(loop);
+    var dt=Math.min(0.05,(ts-(last||ts))/1000);last=ts;
+    if(state==='run')update(dt);else time+=dt;
+    draw();
+  }
+
+  function act(a){
+    if(state!=='run')return;
+    if(a==='left')lane=Math.max(-1,lane-1);
+    else if(a==='right')lane=Math.min(1,lane+1);
+    else if(a==='up'){if(jumpT===0){jumpT=0.0001;slideT=0;}}
+    else if(a==='down'){slideT=SD;if(jumpT>0)jumpT=0;}
+  }
+  var sx=0,sy=0,fired=false;
+  cv.addEventListener('touchstart',function(e){var t=e.changedTouches[0];sx=t.clientX;sy=t.clientY;fired=false;e.preventDefault();},{passive:false});
+  cv.addEventListener('touchmove',function(e){
+    if(fired)return;var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)>24||Math.abs(dy)>24){fired=true;act(Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down'));}
+    e.preventDefault();
+  },{passive:false});
+  cv.addEventListener('touchend',function(e){
+    if(!fired){var t=e.changedTouches[0],r=cv.getBoundingClientRect();act(t.clientX<r.left+r.width/2?'left':'right');}
+    e.preventDefault();
+  },{passive:false});
+  document.addEventListener('keydown',function(e){
+    if(modal.style.display==='none')return;
+    var m={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',' ':'up',ArrowDown:'down',s:'down'}[e.key];
+    if(m){act(m);e.preventDefault();}
+  });
+
+  function resize(){var r=cv.getBoundingClientRect(),d=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,Math.round(r.width*d));cv.height=Math.max(1,Math.round(r.height*d));}
+  function openGame(){
+    modal.style.display='flex';resize();state='ready';lane=0;px=0;objs=[];dist=0;coins=0;last=0;
+    showUi('XINERGY RUN',null,null,false);
+    try{tg&&tg.disableVerticalSwipes&&tg.disableVerticalSwipes()}catch(e){}
+    cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  }
+  function closeGame(){
+    modal.style.display='none';state='ready';cancelAnimationFrame(raf);
+    try{tg&&tg.enableVerticalSwipes&&tg.enableVerticalSwipes()}catch(e){}
+  }
+  window.addEventListener('resize',function(){if(modal.style.display!=='none')resize();});
+  $('btnRunOpen').addEventListener('click',openGame);
+  $('runStart').addEventListener('click',start);
+  $('runClose').addEventListener('click',closeGame);
+  $('runShare').addEventListener('click',function(){
+    var u='https://t.me/share/url?url='+encodeURIComponent('https://t.me/XinergyLabsbot/app')+'&text='+encodeURIComponent('Corrí '+Math.floor(dist)+' m y junté '+coins+' monedas XL en Xinergy Run ⚡ ¿Me superas?');
+    if(tg&&tg.openTelegramLink)tg.openTelegramLink(u);else window.open(u,'_blank');
+  });
 })();
 </script>
 </body>
