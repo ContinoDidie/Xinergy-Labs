@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico Xinergy</title>
+<style>body{margin:0;padding:14px;background:#04070d;color:#e9f1f5;font:14px/1.45 system-ui,sans-serif}h1{font-size:18px;margin:0 0 4px}p{color:#9ab;margin:0 0 10px;font-size:12px}.r{padding:7px 9px;margin:5px 0;border-radius:8px;background:#0c1a22;border-left:5px solid #888;word-break:break-all}.ok{border-color:#00ff66}.no{border-color:#ff4d6d;background:#2a0b12}.w{border-color:#ffb347}</style></head>
+<body><h1>Diagnóstico · Xinergy Match &amp; Synth</h1><p>Haz una captura de TODA esta pantalla (desplázate hasta el final) y envíamela.</p><div id="out"></div>
+<script>
+var out=document.getElementById('out');
+function add(c,t){var d=document.createElement('div');d.className='r '+c;d.textContent=t;out.appendChild(d);return d;}
+add('ok','1. JavaScript funciona · '+new Date().toLocaleTimeString());
+add('w','Navegador: '+navigator.userAgent);
+add('w','Pantalla '+innerWidth+'x'+innerHeight+' · ratio '+devicePixelRatio+' · Telegram: '+(window.Telegram&&window.Telegram.WebApp?'ya presente':'no presente aún'));
+[['async/await','async function f(){await 1}'],['funciones flecha','var a=()=>1'],['plantillas','var x=`a${1}`'],['spread de objetos','var o={...{a:1}}'],['catch sin variable','try{}catch{}'],['encadenado opcional','var q=null?.a']].forEach(function(t){try{new Function(t[1]);add('ok','Sintaxis '+t[0]+': sí');}catch(e){add('no','Sintaxis '+t[0]+': NO ('+e.message+')');}});
+try{var ar=CSS.supports('aspect-ratio','1/1'),gr=CSS.supports('display','grid'),vr=CSS.supports('color','var(--a)');add(ar&&gr&&vr?'ok':'w','CSS: aspect-ratio '+ar+' · grid '+gr+' · variables '+vr);}catch(e){add('no','CSS.supports falló');}
+function webp(n,u){var im=new Image();im.onload=function(){add('ok','WebP '+n+': sí');};im.onerror=function(){add('no','WebP '+n+': NO');};im.src=u;}
+webp('normal','data:image/webp;base64,UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA==');
+webp('con transparencia','data:image/webp;base64,UklGRkoAAABXRUJQVlA4WAoAAAAQAAAAAAAAAAAAQUxQSAwAAAARBxAR/Q9ERP8DAABWUDggGAAAABQBAJ0BKgEAAQADADQlpAADcAD++/1QAA==');
+function script(n,u,ms){var t0=Date.now(),row=add('w','Cargando '+n+'…'),done=false;var s=document.createElement('script');s.src=u;s.onload=function(){done=true;row.className='r ok';row.textContent=n+': cargó en '+(Date.now()-t0)+' ms';};s.onerror=function(){done=true;row.className='r no';row.textContent=n+': BLOQUEADO o falló ('+(Date.now()-t0)+' ms)';};document.head.appendChild(s);setTimeout(function(){if(!done){row.className='r no';row.textContent=n+': SIN RESPUESTA tras '+ms/1000+' s (colgado)';}},ms);}
+script('telegram.org/telegram-web-app.js','https://telegram.org/js/telegram-web-app.js',8000);
+script('sad.adsgram.ai (anuncios)','https://sad.adsgram.ai/js/sad.min.js',8000);
+
+/* Las comprobaciones apuntan siempre a la raíz de GitHub Pages. */
+var BASE = 'https://continodidie.github.io/Xinergy-Labs/';
+
+function archivo(n){
+    var row = add('w', 'Leyendo ' + n + '…');
+    fetch(BASE + n + '?x=' + Date.now(), {cache:'no-store'})
+    .then(function(r){
+        if(!r.ok){
+            row.className='r no';
+            row.textContent=BASE+n+': ERROR '+r.status+' (respuesta del servidor)';
+            return;
+        }
+        return r.text().then(function(t){
+            var v=(t.match(/· v(\d+)'/)||[])[1];
+            var l=(t.match(/match\.html\?v=(\d+)/)||[])[1];
+            row.className='r ok';
+            row.textContent=n+': '+Math.round(t.length/1024)+' KB, '+t.split('\n').length+' líneas'+(v?' · versión interna v'+v:'')+(l?' · enlace al juego ?v='+l:'')+' · URL: '+BASE+n;
+        });
+    })
+    .catch(function(e){
+        row.className='r no';
+        row.textContent=n+': no se pudo leer ('+e.message+')';
+    });
+}
+archivo('app.html');
+archivo('match.html');
+
+['shaker','weight','creatine','gloves','battery','xl','crystal'].forEach(function(k){
+    var row=add('w','tiles/'+k+'.png …');
+    var im=new Image();
+    im.onload=function(){row.className='r '+(im.naturalWidth>1024?'w':'ok');row.textContent='tiles/'+k+'.png: '+im.naturalWidth+'x'+im.naturalHeight+(im.naturalWidth>1024?' (MUY GRANDE: el juego la ignora)':' (bien)');};
+    im.onerror=function(){row.className='r w';row.textContent='tiles/'+k+'.png: no está en la carpeta (se usa la incrustada)';};
+    im.src=BASE+'tiles/'+k+'.png?x='+Date.now();
+});
+window.addEventListener('error',function(e){add('no','ERROR: '+e.message+' ('+String(e.filename).split('/').pop()+':'+e.lineno+')');});
+</script></body></html>
