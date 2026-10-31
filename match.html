@@ -95,7 +95,7 @@ b{font-family:var(--head)}
   </div>
   <div class="legend">Básicas ×10 = 1 XL · Energy ×5 = 1 XL · XL ×10 = 1 cristal</div>
   <div class="msg" id="msg">Conecta <strong>3 o más</strong> fichas iguales, también en diagonal.<br>10 básicas o 5 energy = 1 XL · 10 XL = 1 cristal.</div>
-  <div class="legal"><span id="adStatus"></span><br><span id="dbg"></span><br>Los anuncios son opcionales. Las monedas y los cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.</div>
+  <div class="legal"><div id="dbgwrap" style="display:none"><span id="adStatus"></span><br><span id="dbg"></span></div>Los anuncios son opcionales. Las monedas y los cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.</div>
 </div>
 <script>
 (function(){
@@ -222,7 +222,7 @@ b{font-family:var(--head)}
   $('exit').addEventListener('click',function(){location.href='app.html';});
   function dbg(){try{var cs=document.querySelectorAll('#grid .cell'),im=document.querySelectorAll('#grid .cell img'),ok=0,i;for(i=0;i<im.length;i++)if(im[i].complete&&im[i].naturalWidth>0)ok++;var r=bd.getBoundingClientRect();$('dbg').textContent='celdas '+cs.length+' · fichas '+ok+'/'+im.length+' · tablero '+Math.round(r.width)+'x'+Math.round(r.height)+' · sin scripts externos · '+' · carpeta tiles: '+Object.keys(FOLDER).map(function(k){return k+(FOLDER[k]===1?' ok':FOLDER[k]===2?' (muy grande, ignorada)':' no está')}).join(', ');}catch(e){$('dbg').textContent='dbg: '+e.message;}}
   setTimeout(function(){if(!document.querySelectorAll('#grid .cell').length)start();},700);setTimeout(dbg,1500);setTimeout(dbg,5000);
-  adStatus();
+  adStatus();if(/[?&]debug=1/.test(location.search))$('dbgwrap').style.display='';
   start();
 })();
 </script>
