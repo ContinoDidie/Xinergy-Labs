@@ -273,7 +273,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
 
 
   <section class="card" id="msCard">
-    <div class="card-head"><h2>Match &amp; Synth</h2><span class="soon-badge">PROTOTIPO</span></div>
+    <div class="card-head"><h2>Match &amp; Synth</h2></div>
     <p class="muted">Conecta shakers, pesas, baterías y monedas XL. Con 10 monedas creas un cristal. Las monedas y cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="msBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="msOpen" style="padding:11px 18px">▶ Jugar</button></div>
   </section>
@@ -292,7 +292,9 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
       <div>
         <h3>Heavy Load Protocol</h3>
         <p class="muted">8 semanas · 4 días por semana · 32 sesiones. Hipertrofia, fuerza y performance, con guía técnica de cada ejercicio.</p>
-        <div class="acts"><button class="btn-mini ghost" id="btnManPrev">Vista previa gratis</button><button class="btn-mini" id="btnManBuy">Comprar el manual</button></div>
+        <div class="acts"><button class="btn-mini ghost" id="btnManPrev">Vista previa gratis</button><button class="btn-mini" id="btnManBuy">Comprar en la tienda</button></div>
+        <div class="acts" style="margin-top:8px"><button class="btn-sync" id="btnManStars" style="padding:12px;font-size:.92rem" disabled>⭐ Comprar con Telegram Stars</button></div>
+        <p class="muted" id="manStarsInfo" style="font-size:.74rem;margin-top:6px;line-height:1.45"></p>
       </div>
     </div>
     <p class="muted" style="font-size:.7rem;line-height:1.5;margin-top:12px">Programa educativo. Consulta a un profesional de la salud antes de empezar.</p>
@@ -544,6 +546,34 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     var i=0;(function next(){if(i>=MANUAL_PREVIEW_URLS.length){showToast('No encuentro la vista previa. Súbela al repositorio como Heavy-Load-Protocol-Preview.pdf',5000);return;}
       var u=MANUAL_PREVIEW_URLS[i++];fetch(u,{method:'HEAD',cache:'no-store'}).then(function(r){if(r.ok)openExt(u);else next();}).catch(next);})();
   });$('btnManBuy').addEventListener('click',function(){openExt(MANUAL_SHOP_URL)});}
+
+  // ---- Compra del manual con Telegram Stars ----
+  var starsBtn=$('btnManStars'),starsInfo=$('manStarsInfo'),starsOwned=false;
+  function loadOffer(){
+    if(!starsBtn)return;
+    if(!isMini){starsBtn.disabled=true;starsInfo.textContent='Para pagar con Stars abre la MiniApp desde Telegram.';return;}
+    call('manual_offer').then(function(d){
+      var o=d.offer;starsOwned=!!o.owned;starsBtn.disabled=false;
+      if(o.owned){starsBtn.textContent='📘 Recibir el manual en el chat';starsInfo.textContent='Ya tienes el manual. Te lo reenviamos al chat con el bot.';return;}
+      starsBtn.textContent='⭐ Comprar con Stars · '+fmt(o.price)+' ⭐';
+      starsInfo.textContent=o.launch?('Oferta de lanzamiento: '+fmt(o.price)+' ⭐ para las primeras 50 personas (quedan '+o.remaining+'). Después, '+fmt(o.regular)+' ⭐. Recibes el PDF en el chat con el bot.'):('Precio: '+fmt(o.price)+' ⭐. Recibes el PDF en el chat con el bot.');
+    }).catch(function(){starsBtn.disabled=true;starsInfo.textContent='No se pudo cargar el precio. Inténtalo más tarde.';});
+  }
+  if(starsBtn){starsBtn.addEventListener('click',function(){
+    if(starsOwned){openTg('https://t.me/XinergyLabsbot?start=manual');return;}
+    if(!tg||!tg.openInvoice){showToast('Actualiza Telegram para pagar con Stars.',4000);return;}
+    starsBtn.disabled=true;
+    call('manual_invoice').then(function(d){
+      var r=d.result||{};
+      if(!r.ok){showToast(r.reason==='owned'?'Ya tienes el manual.':'No se pudo iniciar el pago.',3500);starsBtn.disabled=false;loadOffer();return;}
+      tg.openInvoice(r.link,function(st){
+        starsBtn.disabled=false;
+        if(st==='paid'){showToast('⭐ ¡Pago recibido! Te enviamos el manual al chat con el bot.',6000);setTimeout(loadOffer,1500);}
+        else if(st==='failed')showToast('El pago no se completó. Inténtalo de nuevo.',4000);
+      });
+    }).catch(function(e){showToast(e.message,4500);starsBtn.disabled=false;});
+  });}
+  if(MANUAL_SHOW)loadOffer();
 
   async function init(){
     if(!sb){$('missionList').innerHTML='<p class="muted">No se pudo cargar la conexión. Recarga la página.</p>';return;}
@@ -822,7 +852,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   var tg=window.Telegram&&window.Telegram.WebApp,mini=!!(tg&&tg.initData);
   try{document.getElementById('msBest').textContent=parseInt(localStorage.getItem('xl_ms_best')||'0',10)||0}catch(e){}
   document.getElementById('msOpen').addEventListener('click',function(){
-    if(mini)location.href='match.html?v=16';else window.open('match.html?v=16','_blank');
+    if(mini)location.href='match.html?v=17';else window.open('match.html?v=17','_blank');
   });
 })();
 </script>
