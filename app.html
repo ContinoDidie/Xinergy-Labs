@@ -3,10 +3,11 @@
 <head>
 <script>
 /* Aviso de errores en pantalla (diagnóstico) */
-(function(){var box,shown=0;function show(t){try{if(!box){box=document.createElement('pre');box.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:42vh;overflow:auto;margin:0;padding:8px 10px;background:#2a0b0b;color:#ffb4b4;font:11px/1.4 monospace;z-index:99999;white-space:pre-wrap';(document.body||document.documentElement).appendChild(box);}box.textContent+=t+'\n';}catch(e){}}
+(function(){var box,seen={},rows={},n=0;
+function show(t){try{if(!box){box=document.createElement('div');box.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;margin:0;padding:8px 10px;background:#2a0b0b;color:#ffb4b4;font:11px/1.4 monospace;z-index:99999;white-space:pre-wrap';(document.body||document.documentElement).appendChild(box);}
+if(seen[t]){seen[t]++;rows[t].textContent=t+'  (x'+seen[t]+')';return;}seen[t]=1;if(++n>12)return;var d=document.createElement('div');d.textContent=t;rows[t]=d;box.appendChild(d);}catch(e){}}
 window.__xlshow=show;
-function src(n){try{fetch(location.href.split('#')[0],{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var L=t.split(/\r?\n/);show('  archivo recibido: '+t.length+' caracteres, '+L.length+' líneas');for(var i=Math.max(1,n-1);i<=n+1;i++)show('  '+i+': '+(L[i-1]||'').trim().slice(0,150));}).catch(function(){});}catch(e){}}
-window.addEventListener('error',function(e){show('Error: '+e.message+' ('+String(e.filename||'').split('#')[0].split('/').pop()+':'+e.lineno+') [v12]');if(shown++<2&&e.lineno)src(e.lineno);});
+window.addEventListener('error',function(e){var f=String(e.filename||'').split('#')[0].split('/').pop();show('Error: '+e.message+' ('+(f||'script externo')+':'+e.lineno+') [v16]');});
 window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.reason&&e.reason.message)||e.reason));});})();
 </script>
 <meta charset="UTF-8">
@@ -50,7 +51,7 @@ header{display:flex;flex-direction:column;align-items:center;gap:12px;padding:ca
 
 /* TARJETAS */
 .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);position:relative;overflow:hidden}
-.card.top::before{content:'';position:absolute;top:0;right:0;bottom:0;left:0 0 auto 0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple))}
+.card.top::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;background:linear-gradient(90deg,var(--green),var(--cyan),var(--purple))}
 .card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .card-head h2{font-size:1rem;font-weight:600}
 .live{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;color:var(--green);font-weight:700}
@@ -385,7 +386,9 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   var tg=window.Telegram&&window.Telegram.WebApp;
   if(tg){tg.ready();tg.expand();}
   var sb=window.supabase&&window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-  var state=null,isMini=!!(tg&&tg.initData);
+  var hashInit='';try{hashInit=new URLSearchParams((location.hash||'').slice(1)).get('tgWebAppData')||'';if(hashInit)sessionStorage.setItem('xl_init',hashInit);else hashInit=sessionStorage.getItem('xl_init')||'';}catch(e){}
+  var initStr=(tg&&tg.initData)||hashInit;
+  var state=null,isMini=!!initStr;
   function $(id){return document.getElementById(id)}
   function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
   function fmt(n){return Number(n).toLocaleString('es')}
@@ -505,14 +508,14 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   // Código de referido: en la MiniApp lo firma Telegram; en la web viene en ?ref= y se guarda por si el usuario tarda en entrar
   function getRefParam(){
     var r='';
-    if(isMini&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)return tg.initDataUnsafe.start_param;
+    if(isMini){var sp=(tg&&tg.initDataUnsafe&&tg.initDataUnsafe.start_param)||'';try{sp=sp||new URLSearchParams(initStr).get('start_param')||''}catch(e){}if(sp)return sp;}
     try{r=new URLSearchParams(location.search).get('ref')||''}catch(e){}
     try{if(r)localStorage.setItem('xl_ref',r);else r=localStorage.getItem('xl_ref')||''}catch(e){}
     return r;
   }
   function getSess(){try{return localStorage.getItem('xl_session')||''}catch(e){return ''}}
   function setSess(v){try{v?localStorage.setItem('xl_session',v):localStorage.removeItem('xl_session')}catch(e){}}
-  function authBase(){return isMini?{initData:tg.initData}:{session:getSess()}}
+  function authBase(){return isMini?{initData:initStr}:{session:getSess()}}
   function enter(d){document.body.classList.remove('guest');$('loginCard').style.display='none';$('webBar').style.display=isMini?'none':'';render(d);}
   function showLogin(){
     document.body.classList.add('guest');$('loginCard').style.display='';$('webBar').style.display='none';
@@ -819,7 +822,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   var tg=window.Telegram&&window.Telegram.WebApp,mini=!!(tg&&tg.initData);
   try{document.getElementById('msBest').textContent=parseInt(localStorage.getItem('xl_ms_best')||'0',10)||0}catch(e){}
   document.getElementById('msOpen').addEventListener('click',function(){
-    if(mini)location.href='match.html?v=14';else window.open('match.html?v=14','_blank');
+    if(mini)location.href='match.html?v=16';else window.open('match.html?v=16','_blank');
   });
 })();
 </script>
