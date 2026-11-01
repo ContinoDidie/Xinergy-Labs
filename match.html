@@ -11,7 +11,7 @@
 function show(t){try{if(!box){box=document.createElement('div');box.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;margin:0;padding:8px 10px;background:#2a0b0b;color:#ffb4b4;font:11px/1.4 monospace;z-index:99999;white-space:pre-wrap';(document.body||document.documentElement).appendChild(box);}
 if(seen[t]){seen[t]++;rows[t].textContent=t+'  (x'+seen[t]+')';return;}seen[t]=1;if(++n>12)return;var d=document.createElement('div');d.textContent=t;rows[t]=d;box.appendChild(d);}catch(e){}}
 window.__xlshow=show;
-window.addEventListener('error',function(e){var f=String(e.filename||'').split('#')[0].split('/').pop();show('Error: '+e.message+' ('+(f||'script externo')+':'+e.lineno+') [v16]');});
+window.addEventListener('error',function(e){if(!e.filename||e.message==='Script error.')return;var f=String(e.filename||'').split('#')[0].split('/').pop();show('Error: '+e.message+' ('+(f||'script externo')+':'+e.lineno+') [v17]');});
 window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.reason&&e.reason.message)||e.reason));});})();
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Manrope:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -75,14 +75,17 @@ b{font-family:var(--head)}
   <div class="hud">
     <div class="gembox"><img id="gemImg" alt=""><b id="crystals">0</b></div>
     <div class="mid"><div class="l"><span>MOVIMIENTOS</span><b id="moves">25</b></div><div class="mbar"><i id="mfill"></i></div></div>
-    <div class="scorebox"><small>score</small><b id="score">0</b></div>
+    <div class="scorebox"><small>score<span id="multTag"></span></small><b id="score">0</b></div>
   </div>
   <div class="frame">
     <div id="board">
       <svg id="svg"><polyline id="line" points=""/></svg>
       <div id="grid"></div>
-      <div class="ui" id="ui"><div style="font-size:42px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div>
-        <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar: +4 movimientos (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><button class="btn s" id="share">Compartir resultado</button></div>
+      <div class="ui" id="ui"><div style="font-size:42px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div><div class="info" id="rankMsg" style="font-size:.8rem;color:#8fd;min-height:1.2em"></div>
+        <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar: +4 movimientos (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><button class="btn s" id="goRank">Ver ranking del mes</button><button class="btn s" id="share">Compartir resultado</button></div>
+      <div class="ui" id="pre"><div style="font-size:42px">⚡</div><h2 class="grad">POTENCIADOR OPCIONAL</h2>
+        <div class="info">Mira un anuncio corto y todo lo que sumes en esta partida —<b>monedas XL y puntos</b>— vale <b style="color:#00ff66">el doble (×2)</b>.</div>
+        <button class="btn ad" id="preAd">▶ Ver anuncio y activar ×2</button><button class="btn s" id="preSkip">Jugar sin potenciador</button><div class="info" id="preMsg" style="font-size:.74rem"></div></div>
       <div class="ui" id="pz"><h2 class="grad">PAUSA</h2><button class="btn p" id="resume">Continuar</button><button class="btn s" id="exit">Salir al inicio</button></div>
     </div>
   </div>
@@ -142,13 +145,13 @@ b{font-family:var(--head)}
       try{
         ctl.show().then(function(r){
           if(r&&r.done===false)return;
-          adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');
+          clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');
         }).catch(function(r){say('No se pudo mostrar el anuncio: '+((r&&r.description)||'no hay anuncios disponibles ahora')+'.');});
       }catch(e){say('No se pudo mostrar el anuncio.');}
     });
   }
   var N=6,MAXM=25,BASE=['weight','creatine','shaker','gloves','battery'];
-  var board=[],path=[],drag=false,over=true,moves=MAXM,coins=0,cry=0,pb=0,pe=0,px=0,score=0,best=0,rnd=null,log=[];
+  var mult=1,board=[],path=[],drag=false,over=true,moves=MAXM,coins=0,cry=0,pb=0,pe=0,px=0,score=0,best=0,rnd=null,log=[];
   try{best=parseInt(localStorage.getItem('xl_ms_best')||'0',10)||0}catch(e){}
   var grid=$('grid'),line=$('line'),bd=$('board');
   // Generador con semilla: permite validar la partida en el servidor más adelante
@@ -185,11 +188,11 @@ b{font-family:var(--head)}
   function commit(){
     var t=tp(path[0]),n=path.length,sl=path.map(function(q){return{r:q.r,c:q.c}}),lastPos=sl[sl.length-1],g=0,spawn=0,m='',i;
     log.push({t:t,p:sl.map(function(q){return[q.r,q.c]})});moves--;
-    if(t==='xl'){coins+=n;px+=n;g=n*20;var c2=Math.floor(px/10);px%=10;if(c2>0){cry+=c2;g+=c2*300;m='💎 <strong>¡CRISTAL!</strong> Reuniste 10 fichas XL.';}else m='Recolectaste <strong>'+n+' fichas XL</strong> ('+px+'/10 para un cristal).';}
+    if(t==='xl'){coins+=n*mult;px+=n;g=n*20;var c2=Math.floor(px/10);px%=10;if(c2>0){cry+=c2;g+=c2*300;m='💎 <strong>¡CRISTAL!</strong> Reuniste 10 fichas XL.';}else m='Recolectaste <strong>'+n+' fichas XL</strong> ('+px+'/10 para un cristal).';}
     else if(t==='battery'){pe+=n;g=n*4;spawn=Math.floor(pe/5);pe%=5;m='⚡ Energy: <strong>'+pe+'/5</strong> para la próxima XL.';}
     else{pb+=n;g=n*3;spawn=Math.floor(pb/10);pb%=10;m='Fichas básicas: <strong>'+pb+'/10</strong> para la próxima XL.';}
     if(spawn>0){var k=Math.min(spawn,sl.length);for(i=0;i<k;i++){var cp=sl.pop();board[cp.r][cp.c]='xl';}g+=k*50;m='✨ <strong>¡'+(k>1?'Nacieron '+k+' fichas XL':'Nació una ficha XL')+'!</strong> Conéctala con otras XL.';}
-    score+=g;say(m);popScore(g,lastPos);
+    g*=mult;score+=g;say(m);popScore(g,lastPos);
     sl.forEach(function(q){board[q.r][q.c]=null;});clearSel();gravity();hud();
     if(moves<=0)finish();
   }
@@ -201,13 +204,57 @@ b{font-family:var(--head)}
     over=true;drag=false;clearSel();var rec=score>best;if(rec){best=score;try{localStorage.setItem('xl_ms_best',String(best))}catch(e){}}
     $('sym').textContent=rec?'🏆':'⚡';$('title').textContent=rec?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('final').textContent=score;
     $('info').innerHTML='Monedas XL: <b>'+coins+'</b> · Cristales: <b>'+cry+'</b><br>Mejor puntuación: <b>'+best+'</b>';$('ui').classList.add('show');adUi();
+    clearTimeout(flushT);var rm2=$('rankMsg');if(GAME){if(rm2)rm2.textContent='Se guardará en el ranking en unos segundos…';flushT=setTimeout(flushScore,12000);}else if(rm2)rm2.textContent=initStr()?'Esta partida no cuenta para el ranking.':'Modo práctica: no cuenta para el ranking.';
   }
-  function start(){var bt=$('boot');if(bt&&bt.parentNode)bt.parentNode.removeChild(bt);
-    rnd=mk(Date.now()&0x7fffffff);board=[];for(var r=0;r<N;r++){board[r]=[];for(var c=0;c<N;c++)board[r][c]=pick();}
+  function start(seed){mult=1;try{$('multTag').textContent='';}catch(e){}var bt=$('boot');if(bt&&bt.parentNode)bt.parentNode.removeChild(bt);
+    rnd=mk(seed!=null?seed:(Date.now()&0x7fffffff));board=[];for(var r=0;r<N;r++){board[r]=[];for(var c=0;c<N;c++)board[r][c]=pick();}
     adsLeft=2;moves=MAXM;coins=0;cry=0;pb=0;pe=0;px=0;score=0;log=[];over=false;drag=false;$('ui').classList.remove('show');$('pz').classList.remove('show');clearSel();render();ensureMove();hud();skillUi();adUi();
     say('Conecta <strong>3 o más</strong> fichas iguales, también en diagonal.<br>10 básicas o 5 energy = 1 XL · 10 XL = 1 cristal.');
   }
-  $('again').addEventListener('click',start);$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
+  // ---- Ranking: el servidor reparte la semilla y repite la partida para validarla ----
+  var SB_URL='https://kigkkjpvtnsjalhvyoaz.supabase.co/functions/v1/xl-api',SB_KEY='sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp',GAME=null,flushT=null;
+  function initStr(){try{return sessionStorage.getItem('xl_init')||'';}catch(e){return '';}}
+  function api(action,extra,keep){
+    var is=initStr();if(!is)return Promise.reject(new Error('sin sesión'));
+    var ctl=window.AbortController?new AbortController():null,tm=setTimeout(function(){if(ctl)ctl.abort();},8000);
+    return fetch(SB_URL,{method:'POST',keepalive:!!keep,headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY},body:JSON.stringify(Object.assign({action:action,initData:is},extra||{})),signal:ctl?ctl.signal:undefined}).then(function(r){clearTimeout(tm);return r.json();});
+  }
+  function flushScore(){
+    clearTimeout(flushT);if(!GAME||!over)return;
+    var gid=GAME.id,el=$('rankMsg');GAME=null;if(el)el.textContent='Guardando en el ranking…';
+    api('submit_score',{game_id:gid,moves:log,mult:mult},true).then(function(d){
+      var r=d&&d.result;if(!el)return;
+      if(r&&r.ok&&r.ranked)el.textContent='✓ Guardada en el ranking del mes · tu mejor: '+r.best+(r.rank?' · puesto #'+r.rank:'');
+      else if(r&&r.ok)el.textContent='Esta partida no suma al ranking: ya jugaste las '+r.limit+' partidas diarias con ranking.';
+      else el.textContent='No se pudo validar esta partida para el ranking.';
+    }).catch(function(){if(el)el.textContent='No se pudo guardar en el ranking (sin conexión).';});
+  }
+  function openOffer(){
+    GAME=null;start();over=true;$('preMsg').textContent='';$('pre').classList.add('show');adUi();
+    var rm=$('rankMsg');if(rm)rm.textContent='';
+    if(!initStr()){$('preMsg').textContent='Modo práctica: abre el juego desde la app para entrar al ranking.';return;}
+    var b1=$('preAd'),b2=$('preSkip'),done=false;
+    b1.disabled=b2.disabled=true;$('preMsg').textContent='Conectando con el ranking…';
+    function fin(msg){if(done)return;done=true;b1.disabled=b2.disabled=false;$('preMsg').textContent=msg||'';}
+    setTimeout(function(){fin('Sin conexión con el ranking: esta partida no contará.');},6000);
+    api('start_game').then(function(d){
+      if(done)return;var r=d&&d.result;
+      if(r&&r.ok&&r.id){start(r.seed);over=true;GAME={id:r.id};fin('');}
+      else fin(r&&r.reason==='terms_required'?'Acepta las reglas en la app para entrar al ranking.':r&&r.reason==='captcha_required'?'Completa la verificación en la app para entrar al ranking.':'Esta partida no contará para el ranking.');
+    }).catch(function(){fin('Sin conexión con el ranking: esta partida no contará.');});
+  }
+  function begin(m2){mult=m2;over=false;$('pre').classList.remove('show');try{$('multTag').textContent=m2>1?' ×'+m2:'';}catch(e){}adUi();say(m2>1?'⚡ <strong>Potenciador ×2 activo</strong>: monedas XL y puntos valen el doble.':'Conecta <strong>3 o más</strong> fichas iguales, también en diagonal.<br>10 básicas o 5 energy = 1 XL · 10 XL = 1 cristal.');}
+  $('preSkip').addEventListener('click',function(){begin(1);});
+  $('preAd').addEventListener('click',function(){
+    $('preMsg').textContent='';
+    getAd(function(ctl){
+      if(!ctl){$('preMsg').textContent='No se pudo cargar el servicio de anuncios. Puedes jugar sin potenciador.';return;}
+      try{ctl.show().then(function(r){if(r&&r.done===false){$('preMsg').textContent='Debes ver el anuncio completo para activar ×2.';return;}begin(2);}).catch(function(r){$('preMsg').textContent='No hay anuncio disponible ahora. Puedes jugar sin potenciador.';});}catch(e){$('preMsg').textContent='No se pudo mostrar el anuncio.';}
+    });
+  });
+  $('again').addEventListener('click',function(){flushScore();openOffer();});
+  $('goRank').addEventListener('click',function(){flushScore();setTimeout(function(){location.href='app.html#ranking';},300);});
+  document.addEventListener('visibilitychange',function(){if(document.hidden)flushScore();});window.addEventListener('pagehide',flushScore);$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
   $('share').addEventListener('click',function(){
     var link='https://t.me/XinergyLabsbot/app';try{link=localStorage.getItem('xl_link')||link}catch(e){}
     var u='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Hice '+score+' puntos en Match & Synth de Xinergy Labs ⚡ ¿Me superas?');
@@ -221,9 +268,9 @@ b{font-family:var(--head)}
   function gravity(){gravity0();ensureMove();}
   $('exit').addEventListener('click',function(){location.href='app.html';});
   function dbg(){try{var cs=document.querySelectorAll('#grid .cell'),im=document.querySelectorAll('#grid .cell img'),ok=0,i;for(i=0;i<im.length;i++)if(im[i].complete&&im[i].naturalWidth>0)ok++;var r=bd.getBoundingClientRect();$('dbg').textContent='celdas '+cs.length+' · fichas '+ok+'/'+im.length+' · tablero '+Math.round(r.width)+'x'+Math.round(r.height)+' · sin scripts externos · '+' · carpeta tiles: '+Object.keys(FOLDER).map(function(k){return k+(FOLDER[k]===1?' ok':FOLDER[k]===2?' (muy grande, ignorada)':' no está')}).join(', ');}catch(e){$('dbg').textContent='dbg: '+e.message;}}
-  setTimeout(function(){if(!document.querySelectorAll('#grid .cell').length)start();},700);setTimeout(dbg,1500);setTimeout(dbg,5000);
+  setTimeout(function(){if(!document.querySelectorAll('#grid .cell').length)openOffer();},700);setTimeout(dbg,1500);setTimeout(dbg,5000);
   adStatus();if(/[?&]debug=1/.test(location.search))$('dbgwrap').style.display='';
-  start();
+  openOffer();
 })();
 </script>
 </body>
