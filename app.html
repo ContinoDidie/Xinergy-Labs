@@ -7,7 +7,7 @@
 function show(t){try{if(!box){box=document.createElement('div');box.style.cssText='position:fixed;left:0;right:0;bottom:0;max-height:34vh;overflow:auto;margin:0;padding:8px 10px;background:#2a0b0b;color:#ffb4b4;font:11px/1.4 monospace;z-index:99999;white-space:pre-wrap';(document.body||document.documentElement).appendChild(box);}
 if(seen[t]){seen[t]++;rows[t].textContent=t+'  (x'+seen[t]+')';return;}seen[t]=1;if(++n>12)return;var d=document.createElement('div');d.textContent=t;rows[t]=d;box.appendChild(d);}catch(e){}}
 window.__xlshow=show;
-window.addEventListener('error',function(e){var f=String(e.filename||'').split('#')[0].split('/').pop();show('Error: '+e.message+' ('+(f||'script externo')+':'+e.lineno+') [v16]');});
+window.addEventListener('error',function(e){if(!e.filename||e.message==='Script error.')return;var f=String(e.filename||'').split('#')[0].split('/').pop();show('Error: '+e.message+' ('+(f||'script externo')+':'+e.lineno+') [v17]');});
 window.addEventListener('unhandledrejection',function(e){show('Promesa: '+((e.reason&&e.reason.message)||e.reason));});})();
 </script>
 <meta charset="UTF-8">
@@ -276,6 +276,21 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     <div class="card-head"><h2>Match &amp; Synth</h2></div>
     <p class="muted">Conecta shakers, pesas, baterías y monedas XL. Con 10 monedas creas un cristal. Las monedas y cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="msBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="msOpen" style="padding:11px 18px">▶ Jugar</button></div>
+  </section>
+
+  <section class="card" id="rankCard">
+    <div class="card-head"><h2>Ranking del mes</h2><span class="muted" id="rkSeason"></span></div>
+    <div class="link-box" id="rkPool" style="color:var(--text)">Cargando…</div>
+    <div id="rkList"></div>
+    <p class="note" id="rkMine"></p>
+    <button class="btn-mini ghost" id="btnRkRules" style="margin-top:6px">Reglas del bote</button>
+    <div class="rules" id="rkRules" style="display:none">
+      <p><b>Bote:</b> el 20% de los ingresos netos por anuncios del mes. Se reparte entre el Top 10: 1.º 30%, 2.º 18%, 3.º 12% y el 40% restante a partes iguales entre el 4.º y el 10.º.</p>
+      <p><b>Pago:</b> en USDT (red TON), una vez al mes y solo cuando ese ingreso ya se haya cobrado. Si el bote es menor de 30 USD, pasa al mes siguiente.</p>
+      <p><b>Cómo se compite:</b> cuenta tu mejor partida del mes, con hasta 5 partidas con ranking por día. Si activas el potenciador ×2 con anuncio, esa partida cuenta con el ×2.</p>
+      <p><b>Verificación:</b> cada partida se repite en el servidor. Las partidas imposibles o sospechosas se descartan y el Top 10 se revisa antes de pagar.</p>
+      <p><b>Condiciones:</b> 18 años o más, una cuenta por persona y posible descalificación por trampas. El premio no está garantizado y depende de los ingresos del mes; los impuestos corren por cuenta del ganador. No es una inversión ni está relacionado con ningún token.</p>
+    </div>
   </section>
 
   <section class="card" id="runCard" style="display:none">
@@ -575,10 +590,22 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   });}
   if(MANUAL_SHOW)loadOffer();
 
+  // ---- Ranking mensual de Match & Synth ----
+  function loadRanking(){
+    if(!$('rankCard'))return;
+    call('ranking').then(function(d){
+      var r=d.ranking;$('rkSeason').textContent=r.season;
+      $('rkPool').innerHTML=r.pool.set?'💰 <b>Bote del mes: '+r.pool.usd.toFixed(2)+' USDT</b> <span class="muted">('+r.pool.pct+'% de los anuncios)</span>':'💰 <b>Bote del mes</b> <span class="muted">se publica al cierre del mes (20% de los anuncios)</span>';
+      $('rkList').innerHTML=r.top.slice(0,10).map(function(t,i){return '<div class="row'+(t.me?' me':'')+'"><span>'+(i+1)+'. '+esc(t.name)+(t.me?' (Tú)':'')+'</span><em>'+fmt(t.best)+'</em></div>';}).join('')||'<p class="muted">Aún nadie ha puntuado este mes. ¡Sé el primero!</p>';
+      $('rkMine').textContent=r.mine?'Tu mejor puntuación: '+fmt(r.mine.best)+' · Puesto #'+r.mine.rank:'Aún no tienes puntuación este mes. Juega Match & Synth desde la app.';
+    }).catch(function(){$('rkPool').textContent='No se pudo cargar el ranking.';});
+  }
+  if($('btnRkRules')){$('btnRkRules').addEventListener('click',function(){var b=$('rkRules'),o=b.style.display==='none';b.style.display=o?'':'none';this.textContent=o?'Ocultar las reglas del bote':'Reglas del bote';});}
+
   async function init(){
     if(!sb){$('missionList').innerHTML='<p class="muted">No se pudo cargar la conexión. Recarga la página.</p>';return;}
     if(!isMini&&!getSess()){showLogin();return;}
-    try{enter(await call('me'));}
+    try{enter(await call('me'));loadRanking();if(location.hash==='#ranking')setTimeout(function(){var c=$('rankCard');if(c&&c.scrollIntoView)c.scrollIntoView();},400);}
     catch(e){
       if(!isMini&&/Sesión/.test(e.message)){setSess('');showLogin();return;}
       $('missionList').innerHTML='<p class="muted">No se pudieron cargar tus datos: '+esc(e.message)+'</p>';$('leaderList').innerHTML='';
@@ -852,7 +879,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   var tg=window.Telegram&&window.Telegram.WebApp,mini=!!(tg&&tg.initData);
   try{document.getElementById('msBest').textContent=parseInt(localStorage.getItem('xl_ms_best')||'0',10)||0}catch(e){}
   document.getElementById('msOpen').addEventListener('click',function(){
-    if(mini)location.href='match.html?v=17';else window.open('match.html?v=17','_blank');
+    if(mini)location.href='match.html?v=19';else window.open('match.html?v=19','_blank');
   });
 })();
 </script>
