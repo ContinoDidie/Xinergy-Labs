@@ -61,10 +61,11 @@ b{font-family:var(--head)}
 .slot.big{flex:1.25;border-color:#2a8f9c}.slot.big img{position:relative;width:32px;height:32px;object-fit:contain}
 .msg{margin-top:10px;font-size:.74rem;line-height:1.5;text-align:center;color:#a4b5cd;background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.1);border-radius:10px;padding:9px}.msg strong{color:var(--green)}
 .legal{margin-top:8px;font-size:.64rem;color:var(--muted);text-align:center;line-height:1.5}
-.ui{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(3,8,12,.93);border-radius:20px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center;z-index:20}
-.ui.show{display:flex}.ui h2{font-family:var(--head);font-size:1.6rem}.big{font-family:var(--head);font-size:2.6rem;font-weight:700;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ui{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(3,8,12,.93);border-radius:20px;display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px;text-align:center;z-index:20}
+.ui.show{display:flex}.ui h2{font-family:var(--head);font-size:1.25rem}.big{font-family:var(--head);font-size:2rem;font-weight:700;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .info{font-size:.8rem;color:#9bacc4;line-height:1.7}
-.btn{border:0;border-radius:12px;padding:13px 16px;font-family:var(--head);font-weight:700;font-size:.9rem;width:100%;max-width:250px}
+.btn{border:0;border-radius:12px;padding:10px 12px;font-family:var(--head);font-weight:700;font-size:.84rem;width:100%;max-width:250px}
+.rowb{display:flex;gap:8px;width:100%;max-width:250px}.rowb .btn{flex:1;max-width:none}
 .btn.p{background:linear-gradient(135deg,var(--green),#00b347);color:#021006;box-shadow:0 0 20px rgba(0,255,102,.35)}.btn.s{background:#1b2940;border:1px solid #30435f}.btn.ad{background:linear-gradient(135deg,#7a3cff,#00a8ff);color:#fff}
 </style>
 </head>
@@ -81,9 +82,9 @@ b{font-family:var(--head)}
     <div id="board">
       <svg id="svg"><polyline id="line" points=""/></svg>
       <div id="grid"></div>
-      <div class="ui" id="ui"><div style="font-size:42px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div><div class="info" id="rankMsg" style="font-size:.8rem;color:#8fd;min-height:1.2em"></div>
-        <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar: +4 movimientos (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><button class="btn s" id="goRank">Ver ranking del mes</button><button class="btn s" id="share">Compartir resultado</button></div>
-      <div class="ui" id="pre"><div style="font-size:42px">⚡</div><h2 class="grad">POTENCIADOR OPCIONAL</h2>
+      <div class="ui" id="ui"><div style="font-size:26px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div><div class="info" id="rankMsg" style="font-size:.8rem;color:#8fd;min-height:1.2em"></div>
+        <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar +4 mov. (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><div class="rowb"><button class="btn s" id="share">Compartir</button><button class="btn s" id="goRank">Ranking</button></div></div>
+      <div class="ui" id="pre"><div style="font-size:26px">⚡</div><h2 class="grad">POTENCIADOR OPCIONAL</h2>
         <div class="info">Mira un anuncio corto y todo lo que sumes en esta partida —<b>monedas XL y puntos</b>— vale <b style="color:#00ff66">el doble (×2)</b>.</div>
         <button class="btn ad" id="preAd">▶ Ver anuncio y activar ×2</button><button class="btn s" id="preSkip">Jugar sin potenciador</button><div class="info" id="preMsg" style="font-size:.74rem"></div></div>
       <div class="ui" id="pz"><h2 class="grad">PAUSA</h2><button class="btn p" id="resume">Continuar</button><button class="btn s" id="exit">Salir al inicio</button></div>
@@ -203,7 +204,7 @@ b{font-family:var(--head)}
   function finish(){
     over=true;drag=false;clearSel();var rec=score>best;if(rec){best=score;try{localStorage.setItem('xl_ms_best',String(best))}catch(e){}}
     $('sym').textContent=rec?'🏆':'⚡';$('title').textContent=rec?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('final').textContent=score;
-    $('info').innerHTML='Monedas XL: <b>'+coins+'</b> · Cristales: <b>'+cry+'</b><br>Mejor puntuación: <b>'+best+'</b>';$('ui').classList.add('show');adUi();
+    $('info').innerHTML='XL: <b>'+coins+'</b> · Cristales: <b>'+cry+'</b> · Mejor: <b>'+best+'</b>';$('ui').classList.add('show');adUi();
     clearTimeout(flushT);var rm2=$('rankMsg');if(GAME){if(rm2)rm2.textContent='Se guardará en el ranking en unos segundos…';flushT=setTimeout(flushScore,12000);}else if(rm2)rm2.textContent=initStr()?'Esta partida no cuenta para el ranking.':'Modo práctica: no cuenta para el ranking.';
   }
   function start(seed){mult=1;try{$('multTag').textContent='';}catch(e){}var bt=$('boot');if(bt&&bt.parentNode)bt.parentNode.removeChild(bt);
