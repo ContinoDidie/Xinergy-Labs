@@ -314,6 +314,12 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="msBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="msOpen" style="padding:11px 18px">▶ Jugar</button></div>
   </section>
 
+    <section class="card" id="shCard">
+    <div class="card-head"><h2>Xinergy Shooter</h2><span class="soon-badge">PRÁCTICA</span></div>
+    <p class="muted">Apunta y dispara fichas de colores: junta 3 o más para explotarlas y suelta las que cuelgan para sumar combos. Por ahora no cuenta para el ranking ni para el bote.</p>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="shBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="shOpen" style="padding:11px 18px">▶ Jugar</button></div>
+  </section>
+
   <section class="card" id="rankCard">
     <div class="card-head"><h2>Ranking del mes</h2><span class="muted" id="rkSeason"></span></div>
     <div class="link-box" id="rkPool" style="color:var(--text)">Cargando…</div>
@@ -979,6 +985,10 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   try{document.getElementById('msBest').textContent=parseInt(localStorage.getItem('xl_ms_best')||'0',10)||0}catch(e){}
   document.getElementById('msOpen').addEventListener('click',function(){
     if(mini)location.href='match.html?v=20';else window.open('match.html?v=20','_blank');
+  });
+  try{var shB=document.getElementById('shBest');if(shB)shB.textContent=parseInt(localStorage.getItem('xl_sh_best')||'0',10)||0}catch(e){}
+  document.getElementById('shOpen').addEventListener('click',function(){
+    if(mini)location.href='shooter.html?v=1';else window.open('shooter.html?v=1','_blank');
   });
 })();
 </script>
