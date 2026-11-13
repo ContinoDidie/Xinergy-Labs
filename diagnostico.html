@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnóstico Xinergy</title>
+<style>body{margin:0;padding:14px;background:#04070d;color:#e9f1f5;font:14px/1.45 system-ui,sans-serif}h1{font-size:18px;margin:0 0 4px}p{color:#9ab;margin:0 0 10px;font-size:12px}.r{padding:8px 10px;margin:6px 0;border-radius:8px;background:#0c1a22;border-left:5px solid #888;white-space:pre-wrap;word-break:break-all}.ok{border-color:#00ff66}.no{border-color:#ff4d6d;background:#2a0b12}.w{border-color:#ffb347}</style></head>
+<body><h1>Diagnóstico · archivos publicados</h1><p>Haz una captura de TODA esta pantalla y envíamela.</p><div id="out"></div>
+<script>
+var EXP={"app.html":[161496,1068],"match.html":[242420,328],"shooter.html":[77089,258]};
+var out=document.getElementById('out');
+function add(c,t){var d=document.createElement('div');d.className='r '+c;d.textContent=t;out.appendChild(d);return d;}
+function cnt(t,s){return t.split(s).length-1;}
+add('ok','JavaScript funciona · '+new Date().toLocaleTimeString());
+add('w','Navegador: '+navigator.userAgent);
+add('w','Dirección de esta página: '+location.href);
+Object.keys(EXP).forEach(function(n){
+  var row=add('w','Leyendo '+n+'…');
+  fetch(n+'?x='+Date.now(),{cache:'no-store'}).then(function(r){
+    if(!r.ok){row.className='r no';row.textContent=n+': ERROR '+r.status+' (no está en el repositorio)';return;}
+    return r.text().then(function(t){
+      var bytes=new Blob([t]).size,lines=t.split('\n').length,e=EXP[n];
+      var ok=bytes===e[0]&&lines===e[1];
+      row.className='r '+(ok?'ok':'no');
+      row.textContent=n+'\n  tamaño: '+bytes+' bytes (correcto: '+e[0]+')\n  líneas: '+lines+' (correcto: '+e[1]+')\n  <html>: '+cnt(t,'<html')+' · </html>: '+cnt(t,'</html>')+' · class="app": '+cnt(t,'class="app"')+' · bloques de interfaz compartida: '+cnt(t,'Interfaz compartida')+'\n'+(ok?'  ✔ correcto':'  ✘ NO es la versión correcta: el archivo publicado está duplicado o es de otra versión');
+    });
+  }).catch(function(e){row.className='r no';row.textContent=n+': no se pudo leer ('+e.message+')';});
+});
+</script></body></html>
