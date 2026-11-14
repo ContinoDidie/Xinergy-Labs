@@ -799,7 +799,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
         if(isMini)opts.twaReturnUrl='https://t.me/XinergyLabsbot/app';
         tonUI=new TC(opts);
         tonUI.onStatusChange(function(w){
-          if(w&&w.account&&w.account.address){tonSession=true;linkTon(w.account.address);}
+          if(w&&w.account&&w.account.address){tonSession=true;linkTon(tonUI,w);}
           else if(!w&&tonSession){tonSession=false;unlinkTon();}
         });
       }
@@ -811,12 +811,16 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     b.textContent=tonLinked?'🟢 '+tonLinked.slice(0,6)+'…'+tonLinked.slice(-4):'⚡ Conectar wallet TON';
     b.classList.toggle('on',!!tonLinked);
   }
-  function linkTon(addr){
-    call('wallet_link',{address:addr}).then(function(d){
+  function linkTon(ui,w){
+    var item=w.connectItems&&w.connectItems.tonProof,proof=item&&item.proof;
+    if(!proof){tonSession=false;try{ui.disconnect();}catch(e){}showToast('Tu wallet no pudo demostrar que es tuya. Prueba con otra.',4500);return;}
+    call('wallet_link',{account:w.account,proof:proof}).then(function(d){
       render(d);
       var r=d.result||{};
       tonLinked=r.ok?r.address:null;renderTonBtn();
-      showToast(r.ok?'Wallet TON vinculada ✓':(r.reason==='address_in_use'?'Esa wallet ya está vinculada a otra cuenta.':'No se pudo vincular la wallet.'),4000);
+      var msg={address_in_use:'Esa wallet ya está vinculada a otra cuenta.',challenge:'La verificación caducó. Vuelve a conectar.',expired_proof:'La verificación caducó. Vuelve a conectar.',signature:'La firma no es válida.',state_init:'La dirección no coincide con la wallet.',key_mismatch:'La clave no coincide con la wallet.',domain:'Dominio no válido.'};
+      if(!r.ok){tonSession=false;try{ui.disconnect();}catch(e){}}
+      showToast(r.ok?'Wallet TON vinculada ✓':(msg[r.reason]||'No se pudo vincular la wallet.'),4500);
     }).catch(function(e){showToast(e.message,4000);});
   }
   function unlinkTon(){
@@ -828,7 +832,14 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
       tonInstance().then(function(ui){tonSession=false;try{ui.disconnect();}catch(e){}unlinkTon();}).catch(function(e){showToast(e.message,4000);});
       return;
     }
-    tonInstance().then(function(ui){ui.openModal();}).catch(function(e){showToast(e.message,4000);});
+    call('wallet_challenge').then(function(d){
+      var r=d.result||{};
+      if(!r.ok)throw new Error('No se pudo iniciar la verificación de la wallet.');
+      return tonInstance().then(function(ui){
+        ui.setConnectRequestParameters({state:'ready',value:{tonProof:r.nonce}});
+        ui.openModal();
+      });
+    }).catch(function(e){showToast(e.message,4000);});
   }
 
   async function init(){
