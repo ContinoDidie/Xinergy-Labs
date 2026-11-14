@@ -51,7 +51,7 @@ canvas{display:block}
 .ov.hide{display:none}.ov h2{font-family:var(--head);font-size:1.3rem}.ov p{font-size:.8rem;color:#9bacc4;line-height:1.5}
 .big{font-family:var(--head);font-size:2.1rem;font-weight:700;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn{border:0;border-radius:12px;padding:11px 14px;font-family:var(--head);font-weight:700;font-size:.86rem;width:100%;max-width:240px}
-.btn.p{background:linear-gradient(135deg,var(--green),#00b347);color:#021006;box-shadow:0 0 20px rgba(0,255,102,.35)}.btn.s{background:#1b2940;border:1px solid #30435f}
+.btn.p{background:linear-gradient(135deg,var(--green),#00b347);color:#021006;box-shadow:0 0 20px rgba(0,255,102,.35)}.btn.s{background:#1b2940;border:1px solid #30435f}.btn.ad{background:linear-gradient(135deg,#7a3cff,#00a8ff);color:#fff}
 </style>
 </head>
 <body>
@@ -60,7 +60,7 @@ canvas{display:block}
   <div class="ttl2">XINERGY <span class="grad">SHOOTER</span></div>
   <div class="hud"><div class="box"><small>PUNTOS</small><b id="sc">0</b></div><div class="box"><small>MEJOR</small><b id="bs">0</b></div><div class="box"><small>COMBO</small><b id="cb">×1</b></div></div>
   <div class="frame"><div class="stage" id="stage"><canvas id="cv"></canvas>
-    <div class="ov" id="ov"><h2 class="grad" id="ovT">XINERGY SHOOTER</h2><p id="ovI">Apunta con el dedo y suelta para disparar. Junta 3 o más del mismo color. Toca la ficha de abajo a la izquierda para cambiarla.</p><div id="ovS"></div><button class="btn p" id="ovB">Jugar</button><a class="btn s" href="app.html" style="text-decoration:none;display:block;line-height:1.3">Volver a la app</a></div>
+    <div class="ov" id="ov"><h2 class="grad" id="ovT">XINERGY SHOOTER</h2><p id="shStatus" style="font-size:.8rem;color:#8fd;min-height:1.2em"></p><p id="ovI">Apunta con el dedo y suelta para disparar. Junta 3 o más del mismo color. Toca la ficha de abajo a la izquierda para cambiarla.</p><div id="ovS"></div><button class="btn p" id="ovB">Jugar</button><a class="btn s" href="app.html" style="text-decoration:none;display:block;line-height:1.3">Volver a la app</a></div>
   </div></div>
   <div class="row2"><button class="sq" id="pa" aria-label="Pausa">❚❚</button><button class="sq" id="so" aria-label="Sonido">🔊</button><div class="tip">Cada 6 tiros sin acertar baja una fila. Si las fichas llegan a la línea roja, termina la partida.</div></div>
   <div class="legal">Modo práctica: por ahora este juego no cuenta para el ranking ni para el bote del mes. Funciona sin conexión y no usa scripts externos.</div>
@@ -108,7 +108,7 @@ canvas{display:block}
   var $=function(id){return document.getElementById(id)};
   var COLORS=['#00ff78','#00e5ff','#c77dff','#ffbd45','#ff3366'],COLS=8,ROWS=14,LIMIT=9,MISS_MAX=6;
   var cv=$('cv'),ctx=cv.getContext('2d'),W=0,H=0,R=20,RH=35,DPR=1,shift=0;
-  var grid=[],cur=0,nxt=1,bullet=null,aim=-Math.PI/2,score=0,best=0,combo=1,miss=0,shotsSince=0,state='ready',parts=[],pops=[],last=0,raf=0,snd=true,ac=null,shake=0,level=1;
+  var snap=null,contUsed=false,grid=[],cur=0,nxt=1,bullet=null,aim=-Math.PI/2,score=0,best=0,combo=1,miss=0,shotsSince=0,state='ready',parts=[],pops=[],last=0,raf=0,snd=true,ac=null,shake=0,level=1;
   try{best=parseInt(localStorage.getItem('xl_sh_best')||'0',10)||0;snd=localStorage.getItem('xl_sh_snd')!=='0';}catch(e){}
   function rowOdd(r){return ((r+shift)&1)===1;}
   function rowLen(r){return rowOdd(r)?COLS-1:COLS;}
@@ -124,8 +124,8 @@ canvas{display:block}
   function fillRows(n){shift=0;grid=[];for(var r=0;r<ROWS;r++)grid.push(r<n?newRow(r):emptyRow(r));}
   function hud(){$('sc').textContent=score;$('bs').textContent=best;$('cb').textContent='×'+combo;}
   function rowEvery(){return Math.max(5,9-Math.floor(level/2));}
-  function newGame(){score=0;combo=1;miss=0;shotsSince=0;level=1;bullet=null;parts=[];pops=[];fillRows(5);cur=pickColor();nxt=pickColor();hud();}
-  function start(){newGame();state='run';$('ov').classList.add('hide');last=performance.now();}
+  function newGame(rows){score=0;combo=1;miss=0;shotsSince=0;level=1;bullet=null;parts=[];pops=[];snap=null;contUsed=false;fillRows(rows||5);cur=pickColor();nxt=pickColor();hud();}
+  function start(rows){newGame(rows);state='run';$('ov').classList.add('hide');last=performance.now();}
   function neighbors(r,c){
     var o=[[r,c-1],[r,c+1]],odd=rowOdd(r);
     [-1,1].forEach(function(d){var rr=r+d;if(odd){o.push([rr,c],[rr,c+1]);}else{o.push([rr,c-1],[rr,c]);}});
@@ -143,6 +143,7 @@ canvas{display:block}
   function pop(x,y,t){pops.push({x:x,y:y,t:t,l:.8});}
   function shoot(){
     if(state!=='run'||bullet)return;
+    snap=JSON.stringify({grid:grid,shift:shift,cur:cur,nxt:nxt,score:score,combo:combo,miss:miss,shotsSince:shotsSince,level:level});
     var sp=W*2.6;bullet={x:W/2,y:H-R-8,vx:Math.cos(aim)*sp,vy:Math.sin(aim)*sp,c:cur};cur=nxt;nxt=pickColor();beep(520,.08,'triangle');
   }
   function hits(b){
@@ -179,18 +180,77 @@ canvas{display:block}
     for(var c=0;c<grid[LIMIT].length;c++)if(grid[LIMIT][c]>=0){finish();return;}
     beep(150,.2,'sawtooth',.04);
   }
+  function setStatus(t){var el=$('shStatus');if(el)el.textContent=t;}
+  var REASON={terms_required:'Acepta las reglas en la app para contar en el ranking.',captcha_required:'Completa la verificación en la app para contar en el ranking.',blocked:'Tu cuenta está en revisión.',invalid:'Puntuación no válida.',error:'No se pudo guardar. Inténtalo de nuevo.'};
+
+  // ===== ANUNCIOS (AdsGram) =====
+  var ADS_BLOCK='54913',AdC=null,adsLoading=null;
+  function getAd(cb){
+    if(AdC){cb(AdC);return;}
+    if(window.Adsgram){try{AdC=window.Adsgram.init({blockId:ADS_BLOCK});cb(AdC);}catch(e){cb(null);}return;}
+    if(!adsLoading){adsLoading=new Promise(function(res,rej){
+      var sc=document.createElement('script');sc.src='https://sad.adsgram.ai/js/sad.min.js';sc.async=true;
+      sc.onload=function(){try{AdC=window.Adsgram.init({blockId:ADS_BLOCK});res(AdC);}catch(e){rej(e);}};
+      sc.onerror=function(){rej(new Error('red'));};document.head.appendChild(sc);});}
+    adsLoading.then(cb).catch(function(){cb(null);});
+  }
+  function showAd(onOk,onFail){
+    getAd(function(ctl){
+      if(!ctl){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');return;}
+      try{ctl.show().then(function(r){
+          if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
+          onOk();
+        }).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
+      }catch(e){onFail('No se pudo mostrar el anuncio.');}
+    });
+  }
+  function offerStart(){
+    $('ovB').style.display='none';
+    $('ovT').textContent='XINERGY SHOOTER';
+    $('ovI').textContent='Opcional: mira un anuncio y empiezas con 3 filas menos de presión.';
+    $('ovS').innerHTML='<button class="btn ad" id="adStart">▶ Ver anuncio · empezar con 3 filas menos</button><button class="btn s" id="plain">Jugar normal</button><p id="adMsg" style="font-size:.74rem;color:#9bacc4;min-height:1.2em"></p>';
+    $('ov').classList.remove('hide');
+  }
+  function watchStart(){
+    $('adMsg').textContent='Cargando anuncio…';
+    showAd(function(){start(3);},function(msg){$('adMsg').textContent=msg;});
+  }
+  function watchCont(){
+    $('adMsg').textContent='Cargando anuncio…';
+    showAd(function(){
+      var s=JSON.parse(snap);
+      grid=s.grid;shift=s.shift;cur=s.cur;nxt=s.nxt;score=s.score;combo=s.combo;miss=s.miss;shotsSince=s.shotsSince;level=s.level;
+      bullet=null;parts=[];pops=[];contUsed=true;state='run';
+      $('ov').classList.add('hide');hud();
+      setStatus('Segunda oportunidad: sigues desde antes del último disparo.');
+    },function(msg){$('adMsg').textContent=msg;});
+  }
+  $('ovS').addEventListener('click',function(e){
+    var t=e.target;if(!t||!t.id)return;
+    if(t.id==='adStart')watchStart();
+    else if(t.id==='plain')start(5);
+    else if(t.id==='adCont')watchCont();
+    else if(t.id==='newg')offerStart();
+  });
   function sendScore(sc){
     var is='';try{is=sessionStorage.getItem('xl_init')||'';}catch(e){}
-    if(!is||sc<=0)return;
+    if(!is){setStatus('Modo práctica: abre el juego desde la app para contar en el ranking.');return;}
+    if(sc<=0){setStatus('');return;}
     var K='sb_publishable_h-D9PMPwgsenp1he3gDPpA_pmJmnfwp';
-    fetch('https://kigkkjpvtnsjalhvyoaz.supabase.co/functions/v1/xl-api',{method:'POST',keepalive:true,headers:{'Content-Type':'application/json','apikey':K,'Authorization':'Bearer '+K},body:JSON.stringify({action:'shooter_submit',initData:is,score:sc})}).catch(function(){});
+    setStatus('Guardando en el ranking…');
+    fetch('https://kigkkjpvtnsjalhvyoaz.supabase.co/functions/v1/xl-api',{method:'POST',headers:{'Content-Type':'application/json','apikey':K,'Authorization':'Bearer '+K},body:JSON.stringify({action:'shooter_submit',initData:is,score:sc})})
+      .then(function(r){return r.json();})
+      .then(function(d){var r=(d&&d.result)||{};
+        if(r.ok)setStatus('✓ Puntuación guardada en el ranking.');
+        else setStatus(REASON[r.reason]||('No se guardó: '+(r.reason||'respuesta inesperada')));})
+      .catch(function(e){setStatus('Sin conexión: esta partida no se guardó. ('+(e&&e.message?e.message:'error')+')');});
   }
   function finish(){
     if(state==='over')return;state='over';bullet=null;beep(110,.5,'sawtooth',.07);
     var nb=score>best;if(nb){best=score;try{localStorage.setItem('xl_sh_best',String(best));}catch(e){}}
     sendScore(score);
     $('ovT').textContent=nb?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('ovI').textContent='Mejor puntuación: '+best;
-    $('ovS').innerHTML='<div class="big">'+score+'</div>';$('ovB').textContent='Jugar otra vez';$('ov').classList.remove('hide');hud();
+    $('ovS').innerHTML='<div class="big">'+score+'</div>'+(snap&&!contUsed?'<button class="btn ad" id="adCont">▶ Ver anuncio: una oportunidad más</button>':'')+'<button class="btn p" id="newg">Jugar otra vez</button><p id="adMsg" style="font-size:.74rem;color:#9bacc4;min-height:1.2em"></p>';$('ovB').style.display='none';$('ov').classList.remove('hide');hud();
   }
   function update(dt){
     var i;
@@ -253,15 +313,14 @@ canvas{display:block}
   cv.addEventListener('pointerdown',function(e){if(state!=='run')return;var rc=cv.getBoundingClientRect(),x=e.clientX-rc.left,y=e.clientY-rc.top;downOnNext=Math.hypot(x-R*1.3,y-(H-R*1.1))<R*1.1;if(!downOnNext)aimAt(e);try{cv.setPointerCapture(e.pointerId);}catch(x2){}e.preventDefault();});
   cv.addEventListener('pointermove',function(e){if(state==='run'&&!downOnNext)aimAt(e);});
   cv.addEventListener('pointerup',function(e){if(state!=='run')return;if(downOnNext){downOnNext=false;if(!bullet){var t=cur;cur=nxt;nxt=t;beep(400,.05);}return;}aimAt(e);shoot();});
-  $('ovB').addEventListener('click',function(){start();});
-  $('pa').addEventListener('click',function(){if(state==='run'){state='paused';$('ovT').textContent='PAUSA';$('ovI').textContent='Tu partida está en pausa.';$('ovS').innerHTML='';$('ovB').textContent='Continuar';$('ov').classList.remove('hide');$('ovB').onclick=function(){state='run';$('ov').classList.add('hide');last=performance.now();$('ovB').onclick=null;};}});
+  $('pa').addEventListener('click',function(){if(state==='run'){state='paused';$('ovT').textContent='PAUSA';$('ovI').textContent='Tu partida está en pausa.';$('ovS').innerHTML='';$('ovB').textContent='Continuar';$('ovB').style.display='';$('ov').classList.remove('hide');$('ovB').onclick=function(){state='run';$('ov').classList.add('hide');last=performance.now();$('ovB').onclick=null;};}});
   function sndLbl(){$('so').textContent=snd?'🔊':'🔇';}
   $('so').addEventListener('click',function(){snd=!snd;try{localStorage.setItem('xl_sh_snd',snd?'1':'0');}catch(e){}sndLbl();if(snd)beep(660,.08);});sndLbl();
   document.addEventListener('visibilitychange',function(){if(document.hidden&&state==='run')$('pa').click();});
   window.addEventListener('resize',function(){resize();});
   function paintId(o){try{var xp=o.xp||0,ri=XLUI.rankIdx(xp);$('mAv').innerHTML=XLUI.avatar(o.emblem||'xl',o.frame||'green',50,o.item);$('mName').textContent=o.name||'JUGADOR';$('mRank').innerHTML=XLUI.rankSvg(ri,16)+' <small>'+XLUI.RN[ri]+'</small>';}catch(e){}}
   var cached=null;try{cached=JSON.parse(localStorage.getItem('xl_avatar')||'null');}catch(e){}paintId(cached||{emblem:'xl',frame:'green',name:'JUGADOR',xp:0});
-  resize();fillRows(5);cur=pickColor();nxt=pickColor();hud();raf=requestAnimationFrame(loop);
+  resize();fillRows(5);cur=pickColor();nxt=pickColor();hud();raf=requestAnimationFrame(loop);offerStart();
 })();
 </script>
 </body>
