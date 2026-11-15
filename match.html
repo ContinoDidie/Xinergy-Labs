@@ -189,7 +189,7 @@ b{font-family:var(--head)}
 
   // ===== ANUNCIOS (AdsGram) =====
   var ADSGRAM_BLOCK_ID='54913',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
-  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v27';}catch(e){}}
+  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v29';}catch(e){}}
   function adUi(){var ok=adsLeft>0;$('adBtn').style.display=(ok&&!over)?'':'none';$('adBtn2').style.display=(ok&&over)?'':'none';try{$('adSmall').textContent='+4 mov ('+adsLeft+')';}catch(e){}}
   function initAds(){try{if(window.Adsgram){AdC=window.Adsgram.init(adTest?{blockId:ADSGRAM_BLOCK_ID,debug:true,debugBannerType:'FullscreenMedia'}:{blockId:ADSGRAM_BLOCK_ID});adMsg='listos'+(adTest?' (modo prueba)':'');}else adMsg='no cargó el SDK';}catch(e){AdC=null;adMsg='error al iniciar';}adStatus();adUi();}
   function getAd(cb){
@@ -218,27 +218,31 @@ b{font-family:var(--head)}
   }
   var adsgramOff=false;
   function rewardedAd(onOk0,onFail0){
-    var fin=false,tm=setTimeout(function(){if(!fin){fin=true;onFail0('El anuncio tardó demasiado. Puedes jugar normal.');}},12000);
+    var fin=false,why=[],tm=setTimeout(function(){if(!fin){fin=true;onFail0('El anuncio tardó demasiado. Puedes jugar normal.');}},12000);
     var onOk=function(){if(fin)return;fin=true;clearTimeout(tm);onOk0();};
-    var onFail=function(msg){if(fin)return;fin=true;clearTimeout(tm);onFail0(msg);};
+    var onFail=function(msg){if(fin)return;fin=true;clearTimeout(tm);onFail0(msg+(why.length?' ['+why.join(' · ')+']':''));};
     var fb=function(){
       loadMonetag().then(function(show){
-        show().then(function(){onOk();}).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
-      }).catch(function(){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
+        show().then(function(){onOk();}).catch(function(){
+          why.push('Monetag intersticial sin anuncio');
+          show('pop').then(function(){onOk();}).catch(function(){why.push('Monetag popup sin anuncio');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
+        });
+      }).catch(function(e){why.push('Monetag no cargó: '+(e&&e.message?e.message:'red'));onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
-    if(adsgramOff){fb();return;}
+    if(adsgramOff){why.push('AdsGram inactivo');fb();return;}
     getAd(function(ctl){
-      if(!ctl){adsgramOff=true;fb();return;}
+      if(!ctl){adsgramOff=true;why.push('AdsGram no cargó');fb();return;}
       try{ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
-        }).catch(function(){adsgramOff=true;fb();});
-      }catch(e){adsgramOff=true;fb();}
+        }).catch(function(e){adsgramOff=true;why.push('AdsGram: '+(e&&e.description?e.description:'error'));fb();});
+      }catch(e){adsgramOff=true;why.push('AdsGram error');fb();}
     });
   }
   window.__rewardedAd=rewardedAd;
   function watchAd(){
     if(adsLeft<1)return;
+    say('⏳ Cargando anuncio…');
     rewardedAd(function(){clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');},function(msg){say(msg);});
   }
   var N=6,MAXM=25,BASE=['weight','creatine','shaker','gloves','battery'];
@@ -409,7 +413,7 @@ b{font-family:var(--head)}
   function begin(m2){mult=m2;over=false;$('pre').classList.remove('show');try{$('multTag').textContent=m2>1?' ×'+m2:'';}catch(e){}adUi();say(m2>1?'⚡ <strong>Potenciador ×2 activo</strong>: monedas XL y puntos valen el doble.':'Conecta <strong>3 o más</strong> fichas iguales, también en diagonal.<br>10 básicas o 5 energy = 1 XL · 10 XL = 1 cristal.');}
   $('preSkip').addEventListener('click',function(){begin(1);});
   $('preAd').addEventListener('click',function(){
-    $('preMsg').textContent='';
+    $('preMsg').textContent='⏳ Cargando anuncio…';
     rewardedAd(function(){begin(2);},function(msg){$('preMsg').textContent=msg;});
   });
   $('again').addEventListener('click',function(){if(camp){campNext();return;}flushScore();openOffer();});
