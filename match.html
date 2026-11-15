@@ -78,6 +78,17 @@ b{font-family:var(--head)}
 .idc{display:flex;flex-direction:column;align-items:center;gap:1px}
 .idn{display:flex;align-items:center;gap:6px;font-size:.74rem;color:#cfe}.idn b{letter-spacing:.06em}.idn small{color:#9bd;font-size:.62rem;letter-spacing:.08em}.idn svg{display:block}
 .ttl2{text-align:center;font-family:var(--head);font-weight:700;font-size:1rem;letter-spacing:.08em;margin:0 0 6px}
+.ring{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:3px solid #00ff66;box-shadow:0 0 14px #00ff66;pointer-events:none;z-index:12;animation:ring .6s ease-out forwards}
+.ring.big{width:64px;height:64px;margin:-32px 0 0 -32px;border-color:#ffd34d;box-shadow:0 0 22px #ffd34d;animation-duration:.7s}
+.spk{position:absolute;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none;z-index:13;animation:spk .65s ease-out forwards}
+@keyframes ring{from{transform:scale(.3);opacity:1}to{transform:scale(2.6);opacity:0}}
+@keyframes spk{from{transform:translate(0,0) scale(1);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+.cell.born{animation:born .6s ease-out}
+@keyframes born{0%{transform:scale(1.35);box-shadow:0 0 22px #ffd34d}60%{transform:scale(.95)}100%{transform:scale(1)}}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%}
+.lvb{background:#152238;border:1px solid #2a4a6a;color:#e9f1f5;border-radius:10px;padding:7px 0;font:700 14px system-ui,sans-serif}
+.lvb small{display:block;font-size:.58rem;color:#9bd;margin-top:2px}
+.lvb:disabled{opacity:.4}
 </style>
 </head>
 <body>
@@ -90,12 +101,15 @@ b{font-family:var(--head)}
     <div class="mid"><div class="l"><span>MOVIMIENTOS</span><b id="moves">25</b></div><div class="mbar"><i id="mfill"></i></div></div>
     <div class="scorebox"><small>score<span id="multTag"></span></small><b id="score">0</b></div>
   </div>
+  <div style="display:flex;justify-content:center;margin:2px 0 4px"><button class="btn" id="btnLvl" style="max-width:none;padding:8px 14px;font-size:.8rem">🗺 Niveles</button></div>
+  <div id="goalLine" style="text-align:center;font-size:.76rem;color:#cfe;margin:0 0 6px;min-height:1.1em"></div>
   <div class="frame">
     <div id="board">
       <svg id="svg"><polyline id="line" points=""/></svg>
       <div id="grid"></div>
       <div class="ui" id="ui"><div style="font-size:26px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div><div class="info" id="rankMsg" style="font-size:.8rem;color:#8fd;min-height:1.2em"></div>
         <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar +4 mov. (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><div class="rowb"><button class="btn s" id="share">Compartir</button><button class="btn s" id="goRank">Ranking</button></div></div>
+      <div class="ui" id="lvl"><h2 class="grad">NIVELES</h2><div class="lvgrid" id="lvlGrid"></div><button class="btn s" id="lvlFree" style="margin-top:6px">Modo libre</button><button class="btn s" id="lvlClose">Cerrar</button></div>
       <div class="ui" id="pre"><div style="font-size:26px">⚡</div><h2 class="grad">POTENCIADOR OPCIONAL</h2>
         <div class="info">Mira un anuncio corto y todo lo que sumes en esta partida —<b>monedas XL y puntos</b>— vale <b style="color:#00ff66">el doble (×2)</b>.</div>
         <button class="btn ad" id="preAd">▶ Ver anuncio y activar ×2</button><button class="btn s" id="preSkip">Jugar sin potenciador</button><div class="info" id="preMsg" style="font-size:.74rem"></div></div>
@@ -175,7 +189,7 @@ b{font-family:var(--head)}
 
   // ===== ANUNCIOS (AdsGram) =====
   var ADSGRAM_BLOCK_ID='54913',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
-  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v24';}catch(e){}}
+  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v26';}catch(e){}}
   function adUi(){var ok=adsLeft>0;$('adBtn').style.display=(ok&&!over)?'':'none';$('adBtn2').style.display=(ok&&over)?'':'none';try{$('adSmall').textContent='+4 mov ('+adsLeft+')';}catch(e){}}
   function initAds(){try{if(window.Adsgram){AdC=window.Adsgram.init(adTest?{blockId:ADSGRAM_BLOCK_ID,debug:true,debugBannerType:'FullscreenMedia'}:{blockId:ADSGRAM_BLOCK_ID});adMsg='listos'+(adTest?' (modo prueba)':'');}else adMsg='no cargó el SDK';}catch(e){AdC=null;adMsg='error al iniciar';}adStatus();adUi();}
   function getAd(cb){
@@ -202,19 +216,21 @@ b{font-family:var(--head)}
     });
     return monP;
   }
+  var adsgramOff=false;
   function rewardedAd(onOk,onFail){
     var fb=function(){
       loadMonetag().then(function(show){
         show().then(function(){onOk();}).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
       }).catch(function(){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
+    if(adsgramOff){fb();return;}
     getAd(function(ctl){
-      if(!ctl){fb();return;}
+      if(!ctl){adsgramOff=true;fb();return;}
       try{ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
-        }).catch(function(){fb();});
-      }catch(e){fb();}
+        }).catch(function(){adsgramOff=true;fb();});
+      }catch(e){adsgramOff=true;fb();}
     });
   }
   function watchAd(){
@@ -257,15 +273,18 @@ b{font-family:var(--head)}
 
   function popScore(n,p){var br=bd.getBoundingClientRect(),e=el(p.r,p.c);if(!e)return;var r=e.getBoundingClientRect(),d=document.createElement('div');d.className='fs';d.textContent='+'+n;d.style.left=(r.left+r.width/2-br.left-14)+'px';d.style.top=(r.top-br.top)+'px';bd.appendChild(d);setTimeout(function(){d.remove()},850);}
   function commit(){
-    var t=tp(path[0]),n=path.length,sl=path.map(function(q){return{r:q.r,c:q.c}}),lastPos=sl[sl.length-1],g=0,spawn=0,m='',i;
+    var t=tp(path[0]),n=path.length,sl=path.map(function(q){return{r:q.r,c:q.c}}),lastPos=sl[sl.length-1],g=0,spawn=0,m='',i,spawnPos=null;
     log.push({t:t,p:sl.map(function(q){return[q.r,q.c]})});moves--;
     if(t==='xl'){coins+=n*mult;px+=n;g=n*20;var c2=Math.floor(px/10);px%=10;if(c2>0){cry+=c2;g+=c2*300;m='💎 <strong>¡CRISTAL!</strong> Reuniste 10 fichas XL.';}else m='Recolectaste <strong>'+n+' fichas XL</strong> ('+px+'/10 para un cristal).';}
     else if(t==='battery'){pe+=n;g=n*4;spawn=Math.floor(pe/5);pe%=5;m='⚡ Energy: <strong>'+pe+'/5</strong> para la próxima XL.';}
     else{pb+=n;g=n*3;spawn=Math.floor(pb/10);pb%=10;m='Fichas básicas: <strong>'+pb+'/10</strong> para la próxima XL.';}
-    if(spawn>0){var k=Math.min(spawn,sl.length);for(i=0;i<k;i++){var cp=sl.pop();board[cp.r][cp.c]='xl';}g+=k*50;m='✨ <strong>¡'+(k>1?'Nacieron '+k+' fichas XL':'Nació una ficha XL')+'!</strong> Conéctala con otras XL.';}
+    if(spawn>0){var k=Math.min(spawn,sl.length);for(i=0;i<k;i++){var cp=sl.pop();board[cp.r][cp.c]='xl';spawnPos=cp;}g+=k*50;m='✨ <strong>¡'+(k>1?'Nacieron '+k+' fichas XL':'Nació una ficha XL')+'!</strong> Conéctala con otras XL.';}
     g*=mult;score+=g;say(m);popScore(g,lastPos);
+    removed[t]=(removed[t]||0)+sl.length;
     sl.forEach(function(q){board[q.r][q.c]=null;});clearSel();gravity();hud();
-    if(moves<=0)finish();
+    if(spawnPos)boomAt(spawnPos.r,spawnPos.c,true);else if(n>=5)boomAt(lastPos.r,lastPos.c,false);
+    if(camp){if(goalMet()){campWin();return;}if(moves<=0){campLose();return;}renderGoal();}
+    else if(moves<=0)finish();
   }
   function gravity0(){
     for(var c=0;c<N;c++){var e=0,r;for(r=N-1;r>=0;r--){if(board[r][c]===null)e++;else if(e>0){board[r+e][c]=board[r][c];board[r][c]=null;}}for(r=0;r<e;r++)board[r][c]=pick();}
@@ -273,7 +292,7 @@ b{font-family:var(--head)}
   }
   function finish(){
     over=true;drag=false;clearSel();var rec=score>best;if(rec){best=score;try{localStorage.setItem('xl_ms_best',String(best))}catch(e){}}
-    $('sym').textContent=rec?'🏆':'⚡';$('title').textContent=rec?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('final').textContent=score;
+    $('sym').textContent=rec?'🏆':'⚡';$('title').textContent=rec?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('again').textContent='Jugar otra vez';$('final').textContent=score;
     $('info').innerHTML='XL: <b>'+coins+'</b> · Cristales: <b>'+cry+'</b> · Mejor: <b>'+best+'</b>';$('ui').classList.add('show');adUi();
     clearTimeout(flushT);var rm2=$('rankMsg');if(GAME){if(rm2)rm2.textContent='Se guardará en el ranking en unos segundos…';flushT=setTimeout(flushScore,12000);}else if(rm2)rm2.textContent=initStr()?'Esta partida no cuenta para el ranking.':'Modo práctica: no cuenta para el ranking.';
   }
@@ -300,8 +319,77 @@ b{font-family:var(--head)}
       else el.textContent='No se pudo validar esta partida para el ranking.';
     }).catch(function(){if(el)el.textContent='No se pudo guardar en el ranking (sin conexión).';});
   }
+  // ===== Campaña: 20 niveles con objetivo y estrellas =====
+  var camp=null,campIdx=0,removed={},campAfter='';
+  var LEVELS=[
+    {m:25,g:{t:'coins',n:12}},{m:25,g:{t:'coins',n:16}},{m:25,g:{t:'remove',c:'weight',n:15}},{m:28,g:{t:'crystals',n:1}},
+    {m:25,g:{t:'score',n:1500}},{m:25,g:{t:'remove',c:'shaker',n:18}},{m:25,g:{t:'coins',n:22}},{m:28,g:{t:'crystals',n:2}},
+    {m:25,g:{t:'remove',c:'battery',n:15}},{m:26,g:{t:'score',n:3000}},{m:25,g:{t:'coins',n:26}},{m:25,g:{t:'remove',c:'gloves',n:20}},
+    {m:26,g:{t:'crystals',n:2}},{m:25,g:{t:'remove',c:'creatine',n:20}},{m:25,g:{t:'score',n:4500}},{m:25,g:{t:'coins',n:30}},
+    {m:24,g:{t:'crystals',n:3}},{m:25,g:{t:'remove',c:'weight',n:24}},{m:24,g:{t:'score',n:6000}},{m:25,g:{t:'crystals',n:4}}
+  ];
+  var BNAME={weight:'pesa',creatine:'creatina',shaker:'shaker',gloves:'guantes',battery:'energy'};
+  var CAMP_KEY='xl_camp';
+  function goalText(g){return g.t==='coins'?'Reúne '+g.n+' monedas XL':g.t==='crystals'?'Crea '+g.n+(g.n>1?' cristales':' cristal'):g.t==='score'?'Llega a '+g.n+' puntos':'Elimina '+g.n+' fichas de '+BNAME[g.c];}
+  function goalMet(){var g=camp.g;return g.t==='coins'?coins>=g.n:g.t==='crystals'?cry>=g.n:g.t==='score'?score>=g.n:(removed[g.c]||0)>=g.n;}
+  function campSave(){try{return JSON.parse(localStorage.getItem(CAMP_KEY)||'{"s":[]}');}catch(e){return{s:[]};}}
+  function campStars(i){return campSave().s[i]||0;}
+  function campUnlocked(i){return i===0||campStars(i-1)>=1;}
+  function renderGoal(){try{var el=$('goalLine');if(!el)return;el.innerHTML=camp?'<b>Nivel '+(campIdx+1)+'</b> · '+goalText(camp.g)+' · movimientos: <b>'+moves+'</b>':'Modo libre · sin objetivo';}catch(e){}}
+  function campPlay(i){
+    campIdx=i;camp=LEVELS[i];GAME=null;removed={};
+    start(1000+i*37);moves=camp.m;hud();renderGoal();
+    $('lvl').classList.remove('show');$('ui').classList.remove('show');$('pre').classList.remove('show');
+    $('again').textContent='Jugar otra vez';adUi();
+  }
+  function campWin(){
+    over=true;drag=false;clearSel();
+    var ratio=moves/camp.m,stars=ratio>=0.5?3:ratio>=0.3?2:1;
+    var s=campSave().s;if((s[campIdx]||0)<stars)s[campIdx]=stars;
+    try{localStorage.setItem(CAMP_KEY,JSON.stringify({s:s}));}catch(e){}
+    campAfter=campIdx<19?'next':'levels';
+    $('sym').textContent='🏆';$('title').textContent='NIVEL '+(campIdx+1)+' SUPERADO';$('final').textContent=score;
+    $('info').innerHTML=new Array(stars+1).join('⭐')+' · '+(campIdx<19?'Nivel siguiente desbloqueado':'¡Completaste la campaña!');
+    $('again').textContent=campIdx<19?'Siguiente nivel':'Volver a niveles';
+    $('ui').classList.add('show');adUi();
+  }
+  function campLose(){
+    over=true;drag=false;clearSel();campAfter='retry';
+    $('sym').textContent='⚡';$('title').textContent='NIVEL NO SUPERADO';$('final').textContent=score;
+    $('info').innerHTML='Te faltó: '+goalText(camp.g)+'. Inténtalo otra vez.';
+    $('again').textContent='Reintentar nivel';
+    $('ui').classList.add('show');adUi();
+  }
+  function campNext(){
+    if(campAfter==='next')campPlay(campIdx+1);
+    else if(campAfter==='retry')campPlay(campIdx);
+    else showLevels();
+  }
+  function showLevels(){
+    var h='';for(var i=0;i<LEVELS.length;i++){var ok=campUnlocked(i),st=campStars(i);
+      h+='<button class="lvb" '+(ok?'':'disabled')+' data-l="'+i+'">'+(i+1)+'<small>'+(ok?(st?new Array(st+1).join('⭐'):'—'):'🔒')+'</small></button>';}
+    $('lvlGrid').innerHTML=h;$('lvl').classList.add('show');$('ui').classList.remove('show');$('pre').classList.remove('show');
+  }
+  // Explosión al formar una ficha nueva o al unir 5 o más: la ficha nueva queda en el tablero y pulsa
+  function boomAt(r,c,big){
+    try{
+      var e=el(r,c);if(!e)return;
+      e.classList.add('born');setTimeout(function(){e.classList.remove('born');},650);
+      var rc=e.getBoundingClientRect(),br=bd.getBoundingClientRect(),x=rc.left+rc.width/2-br.left,y=rc.top+rc.height/2-br.top;
+      var ring=document.createElement('div');ring.className='ring'+(big?' big':'');ring.style.left=x+'px';ring.style.top=y+'px';bd.appendChild(ring);setTimeout(function(){ring.remove();},700);
+      var n=big?18:8,cols=['#00ff66','#00e5ff','#c77dff','#ffd34d'];
+      for(var i=0;i<n;i++){var s=document.createElement('div');s.className='spk';var a=Math.random()*6.283,d=(big?50:26)+Math.random()*(big?50:24);
+        s.style.left=x+'px';s.style.top=y+'px';s.style.setProperty('--dx',(Math.cos(a)*d).toFixed(1)+'px');s.style.setProperty('--dy',(Math.sin(a)*d).toFixed(1)+'px');
+        s.style.background=cols[i%4];bd.appendChild(s);setTimeout(function(sp){sp.remove();}.bind(null,s),700);}
+    }catch(err){}
+  }
+  window.__xlBoom=boomAt;
+  $('btnLvl').addEventListener('click',showLevels);
+  $('lvlGrid').addEventListener('click',function(e){var b=e.target.closest('[data-l]');if(b&&!b.disabled)campPlay(+b.dataset.l);});
+  $('lvlFree').addEventListener('click',function(){camp=null;$('lvl').classList.remove('show');openOffer();});
+  $('lvlClose').addEventListener('click',function(){$('lvl').classList.remove('show');});
   function openOffer(){
-    GAME=null;start();over=true;$('preMsg').textContent='';$('pre').classList.add('show');adUi();
+    camp=null;GAME=null;start();over=true;renderGoal();$('preMsg').textContent='';$('pre').classList.add('show');adUi();
     var rm=$('rankMsg');if(rm)rm.textContent='';
     if(!initStr()){$('preMsg').textContent='Modo práctica: abre el juego desde la app para entrar al ranking.';return;}
     var b1=$('preAd'),b2=$('preSkip'),done=false;
@@ -320,7 +408,7 @@ b{font-family:var(--head)}
     $('preMsg').textContent='';
     rewardedAd(function(){begin(2);},function(msg){$('preMsg').textContent=msg;});
   });
-  $('again').addEventListener('click',function(){flushScore();openOffer();});
+  $('again').addEventListener('click',function(){if(camp){campNext();return;}flushScore();openOffer();});
   $('goRank').addEventListener('click',function(){flushScore();setTimeout(function(){location.href='app.html#ranking';},300);});
   document.addEventListener('visibilitychange',function(){if(document.hidden)flushScore();});window.addEventListener('pagehide',flushScore);$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
   $('share').addEventListener('click',function(){
