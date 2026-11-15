@@ -194,16 +194,37 @@ canvas{display:block}
       sc.onerror=function(){rej(new Error('red'));};document.head.appendChild(sc);});}
     adsLoading.then(cb).catch(function(){cb(null);});
   }
-  function showAd(onOk,onFail){
+  // ===== Monetag (respaldo) · zona 12266066 · se carga solo al pulsar un botón de anuncio =====
+  var MON_ZONE='12266066',monP=null;
+  function loadMonetag(){
+    if(monP)return monP;
+    monP=new Promise(function(res,rej){
+      if(typeof window['show_'+MON_ZONE]==='function'){res(window['show_'+MON_ZONE]);return;}
+      var s=document.createElement('script');
+      s.src='//libtl.com/sdk.js';s.async=true;
+      s.setAttribute('data-zone',MON_ZONE);s.setAttribute('data-sdk','show_'+MON_ZONE);
+      s.onload=function(){typeof window['show_'+MON_ZONE]==='function'?res(window['show_'+MON_ZONE]):rej(new Error('sdk'));};
+      s.onerror=function(){monP=null;rej(new Error('red'));};
+      document.head.appendChild(s);
+    });
+    return monP;
+  }
+  function rewardedAd(onOk,onFail){
+    var fb=function(){
+      loadMonetag().then(function(show){
+        show().then(function(){onOk();}).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
+      }).catch(function(){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
+    };
     getAd(function(ctl){
-      if(!ctl){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');return;}
+      if(!ctl){fb();return;}
       try{ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
-        }).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
-      }catch(e){onFail('No se pudo mostrar el anuncio.');}
+        }).catch(function(){fb();});
+      }catch(e){fb();}
     });
   }
+  function showAd(onOk,onFail){ rewardedAd(onOk,onFail); }
   function offerStart(){
     $('ovB').style.display='none';
     $('ovT').textContent='XINERGY SHOOTER';
