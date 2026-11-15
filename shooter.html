@@ -216,7 +216,10 @@ canvas{display:block}
     return monP;
   }
   var adsgramOff=false;
-  function rewardedAd(onOk,onFail){
+  function rewardedAd(onOk0,onFail0){
+    var fin=false,tm=setTimeout(function(){if(!fin){fin=true;onFail0('El anuncio tardó demasiado. Puedes jugar normal.');}},12000);
+    var onOk=function(){if(fin)return;fin=true;clearTimeout(tm);onOk0();};
+    var onFail=function(msg){if(fin)return;fin=true;clearTimeout(tm);onFail0(msg);};
     var fb=function(){
       loadMonetag().then(function(show){
         show().then(function(){onOk();}).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
@@ -232,6 +235,7 @@ canvas{display:block}
       }catch(e){adsgramOff=true;fb();}
     });
   }
+  window.__rewardedAd=rewardedAd;
   function showAd(onOk,onFail){ rewardedAd(onOk,onFail); }
   // ===== Campaña del Shooter: 20 niveles con tiros limitados y objetivo =====
   var CAMPS=[];
