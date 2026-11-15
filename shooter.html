@@ -52,6 +52,10 @@ canvas{display:block}
 .big{font-family:var(--head);font-size:2.1rem;font-weight:700;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 .btn{border:0;border-radius:12px;padding:11px 14px;font-family:var(--head);font-weight:700;font-size:.86rem;width:100%;max-width:240px}
 .btn.p{background:linear-gradient(135deg,var(--green),#00b347);color:#021006;box-shadow:0 0 20px rgba(0,255,102,.35)}.btn.s{background:#1b2940;border:1px solid #30435f}.btn.ad{background:linear-gradient(135deg,#7a3cff,#00a8ff);color:#fff}
+.lvgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%}
+.lvb{background:#152238;border:1px solid #2a4a6a;color:#e9f1f5;border-radius:10px;padding:7px 0;font:700 14px system-ui,sans-serif}
+.lvb small{display:block;font-size:.58rem;color:#9bd;margin-top:2px}.lvb:disabled{opacity:.4}
+.btn.ad{background:linear-gradient(135deg,#7a3cff,#00a8ff);color:#fff}
 </style>
 </head>
 <body>
@@ -59,10 +63,11 @@ canvas{display:block}
   <div class="idbar"><a class="back" href="app.html">← Volver</a><div class="idc"><div id="mAv"></div><div class="idn"><b id="mName">JUGADOR</b><span id="mRank"></span></div></div><div style="width:76px"></div></div>
   <div class="ttl2">XINERGY <span class="grad">SHOOTER</span></div>
   <div class="hud"><div class="box"><small>PUNTOS</small><b id="sc">0</b></div><div class="box"><small>MEJOR</small><b id="bs">0</b></div><div class="box"><small>COMBO</small><b id="cb">×1</b></div></div>
+  <div id="goalS" style="text-align:center;font-size:.76rem;color:#cfe;margin:6px 0 4px;min-height:1.1em"></div>
   <div class="frame"><div class="stage" id="stage"><canvas id="cv"></canvas>
     <div class="ov" id="ov"><h2 class="grad" id="ovT">XINERGY SHOOTER</h2><p id="shStatus" style="font-size:.8rem;color:#8fd;min-height:1.2em"></p><p id="ovI">Apunta con el dedo y suelta para disparar. Junta 3 o más del mismo color. Toca la ficha de abajo a la izquierda para cambiarla.</p><div id="ovS"></div><button class="btn p" id="ovB">Jugar</button><a class="btn s" href="app.html" style="text-decoration:none;display:block;line-height:1.3">Volver a la app</a></div>
   </div></div>
-  <div class="row2"><button class="sq" id="pa" aria-label="Pausa">❚❚</button><button class="sq" id="so" aria-label="Sonido">🔊</button><div class="tip">Cada 9 disparos baja una fila, aunque aciertes. Si las fichas llegan a la línea roja, termina la partida.</div></div>
+  <div class="row2"><button class="sq" id="pa" aria-label="Pausa">❚❚</button><button class="sq" id="so" aria-label="Sonido">🔊</button><button class="sq" id="btnLvlS" aria-label="Niveles" style="width:auto;padding:0 10px;font-size:.78rem">Niveles</button><div class="tip">Cada 9 disparos baja una fila, aunque aciertes. Si las fichas llegan a la línea roja, termina la partida.</div></div>
   <div class="legal">Tu mejor marca cuenta en el ranking general, con tope de 1.000 puntos. El bote del mes solo usa Match & Synth.</div>
 </div>
 <script>
@@ -143,7 +148,7 @@ canvas{display:block}
   function pop(x,y,t){pops.push({x:x,y:y,t:t,l:.8});}
   function shoot(){
     if(state!=='run'||bullet)return;
-    snap=JSON.stringify({grid:grid,shift:shift,cur:cur,nxt:nxt,score:score,combo:combo,miss:miss,shotsSince:shotsSince,level:level});
+    snap=JSON.stringify({grid:grid,shift:shift,cur:cur,nxt:nxt,score:score,combo:combo,miss:miss,shotsSince:shotsSince,level:level,shotsLeft:shotsLeft,removedS:removedS});
     var sp=W*2.6;bullet={x:W/2,y:H-R-8,vx:Math.cos(aim)*sp,vy:Math.sin(aim)*sp,c:cur};cur=nxt;nxt=pickColor();beep(520,.08,'triangle');
   }
   function hits(b){
@@ -163,15 +168,16 @@ canvas{display:block}
     var grp=flood(best2[0],best2[1]);
     if(grp.length>=3){
       var gain=grp.length*10*combo;
-      grp.forEach(function(p){burst(cx(p[0],p[1]),cy(p[0]),COLORS[grid[p[0]][p[1]]],6);grid[p[0]][p[1]]=-1;});
+      grp.forEach(function(p){var c0=grid[p[0]][p[1]];if(c0>=0)removedS[c0]++;burst(cx(p[0],p[1]),cy(p[0]),COLORS[c0],6);grid[p[0]][p[1]]=-1;});
       var fl=floating();
-      if(fl.length){gain+=fl.length*15*combo;fl.forEach(function(p){burst(cx(p[0],p[1]),cy(p[0]),COLORS[grid[p[0]][p[1]]],4);grid[p[0]][p[1]]=-1;});beep(260,.25,'sawtooth',.04);}
+      if(fl.length){gain+=fl.length*15*combo;fl.forEach(function(p){var c1=grid[p[0]][p[1]];if(c1>=0)removedS[c1]++;burst(cx(p[0],p[1]),cy(p[0]),COLORS[c1],4);grid[p[0]][p[1]]=-1;});beep(260,.25,'sawtooth',.04);}
       score+=gain;pop(cx(best2[0],best2[1]),cy(best2[0]),'+'+gain);combo=Math.min(8,combo+1);miss=0;beep(680+combo*40,.12,'triangle');
       var any=false;for(r=0;r<ROWS&&!any;r++)for(c=0;c<grid[r].length;c++)if(grid[r][c]>=0){any=true;break;}
       if(!any){score+=500;level++;pop(W/2,H/2,'¡Nivel '+level+'! +500');fillRows(5);}
     }else{combo=1;miss++;shake=.12;beep(200,.1,'square',.03);if(miss>=MISS_MAX){miss=0;addRow();}}
     if(state==='run'){shotsSince++;if(shotsSince>=rowEvery()){shotsSince=0;addRow();}}
-    if(state==='run'&&best2[0]>=LIMIT)finish();
+    if(state==='run'&&campS){shotsLeft--;if(goalSMet()){campSWin();hud();return;}if(shotsLeft<=0||best2[0]>=LIMIT){campSLose();hud();return;}renderGoalS();}
+    else if(state==='run'&&best2[0]>=LIMIT)finish();
     hud();
   }
   function addRow(){
@@ -209,22 +215,62 @@ canvas{display:block}
     });
     return monP;
   }
+  var adsgramOff=false;
   function rewardedAd(onOk,onFail){
     var fb=function(){
       loadMonetag().then(function(show){
         show().then(function(){onOk();}).catch(function(){onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
       }).catch(function(){onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
+    if(adsgramOff){fb();return;}
     getAd(function(ctl){
-      if(!ctl){fb();return;}
+      if(!ctl){adsgramOff=true;fb();return;}
       try{ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
-        }).catch(function(){fb();});
-      }catch(e){fb();}
+        }).catch(function(){adsgramOff=true;fb();});
+      }catch(e){adsgramOff=true;fb();}
     });
   }
   function showAd(onOk,onFail){ rewardedAd(onOk,onFail); }
+  // ===== Campaña del Shooter: 20 niveles con tiros limitados y objetivo =====
+  var CAMPS=[];
+  for(var li=0;li<20;li++){CAMPS.push({shots:30+Math.floor(li/4),rows:Math.min(7,4+Math.floor(li/4)),g:(li%2===0)?{t:'score',n:400+180*li}:{t:'clear',c:(li>>1)%5,n:12+li}});}
+  var campS=null,campSIdx=0,removedS=[0,0,0,0,0],shotsLeft=0,campSAfter='';
+  var CSAVE='xl_camp_sh',CNAMES=['verde','cian','morado','naranja','rojo'];
+  function campSSave(){try{return JSON.parse(localStorage.getItem(CSAVE)||'{"s":[]}');}catch(e){return{s:[]};}}
+  function campSStars(i){return campSSave().s[i]||0;}
+  function campSUnlocked(i){return i===0||campSStars(i-1)>=1;}
+  function goalSText(g){return g.t==='score'?'Llega a '+g.n+' puntos':'Elimina '+g.n+' fichas '+CNAMES[g.c];}
+  function goalSMet(){var g=campS.g;return g.t==='score'?score>=g.n:(removedS[g.c]||0)>=g.n;}
+  function renderGoalS(){var el=$('goalS');if(!el)return;el.innerHTML=campS?'<b>Nivel '+(campSIdx+1)+'</b> · '+goalSText(campS.g)+' · tiros: <b>'+shotsLeft+'</b>':'Modo libre';}
+  function campPlayS(i){campSIdx=i;campS=CAMPS[i];removedS=[0,0,0,0,0];start(campS.rows);shotsLeft=campS.shots;contUsed=false;snap=null;renderGoalS();$('ov').classList.add('hide');}
+  function showLevelsS(){
+    campS=null;renderGoalS();
+    var h='';for(var i=0;i<CAMPS.length;i++){var ok=campSUnlocked(i),st=campSStars(i);
+      h+='<button class="lvb" '+(ok?'':'disabled')+' data-ls="'+i+'">'+(i+1)+'<small>'+(ok?(st?new Array(st+1).join('⭐'):'—'):'🔒')+'</small></button>';}
+    $('ovT').textContent='NIVELES';$('ovI').textContent='Supera un nivel para desbloquear el siguiente.';
+    $('ovS').innerHTML='<div class="lvgrid">'+h+'</div><button class="btn s" id="lvFree" style="margin-top:6px">Modo libre</button>';
+    $('ov').classList.remove('hide');
+  }
+  function campSWin(){
+    state='over';bullet=null;beep(520,.2,'triangle',.06);
+    var r=shotsLeft/campS.shots,stars=r>=0.5?3:r>=0.3?2:1;
+    var s=campSSave().s;if((s[campSIdx]||0)<stars)s[campSIdx]=stars;
+    try{localStorage.setItem(CSAVE,JSON.stringify({s:s}));}catch(e){}
+    var last=campSIdx>=19;
+    $('ovT').textContent='NIVEL '+(campSIdx+1)+' SUPERADO';
+    $('ovI').textContent=new Array(stars+1).join('⭐')+' · '+(last?'¡Campaña completada!':'Siguiente nivel desbloqueado');
+    $('ovS').innerHTML='<div class="big">'+score+'</div>'+(last?'<button class="btn p" id="lvList">Volver a niveles</button>':'<button class="btn p" id="lvNext">Siguiente nivel</button><button class="btn s" id="lvList">Niveles</button>');
+    $('ov').classList.remove('hide');
+  }
+  function campSLose(){
+    state='over';bullet=null;beep(110,.4,'sawtooth',.06);
+    $('ovT').textContent='NIVEL NO SUPERADO';
+    $('ovI').textContent='Te faltó: '+goalSText(campS.g)+'.';
+    $('ovS').innerHTML=(snap&&!contUsed?'<button class="btn ad" id="adCont">▶ Ver anuncio: una oportunidad más</button>':'')+'<button class="btn p" id="lvRetry">Reintentar nivel</button><button class="btn s" id="lvList">Niveles</button><p id="adMsg" style="font-size:.74rem;color:#9bacc4;min-height:1.2em"></p>';
+    $('ov').classList.remove('hide');
+  }
   function offerStart(){
     $('ovB').style.display='none';
     $('ovT').textContent='XINERGY SHOOTER';
@@ -240,19 +286,26 @@ canvas{display:block}
     $('adMsg').textContent='Cargando anuncio…';
     showAd(function(){
       var s=JSON.parse(snap);
-      grid=s.grid;shift=s.shift;cur=s.cur;nxt=s.nxt;score=s.score;combo=s.combo;miss=s.miss;shotsSince=s.shotsSince;level=s.level;
+      grid=s.grid;shift=s.shift;cur=s.cur;nxt=s.nxt;score=s.score;combo=s.combo;miss=s.miss;shotsSince=s.shotsSince;level=s.level;shotsLeft=s.shotsLeft;removedS=s.removedS;renderGoalS();
       bullet=null;parts=[];pops=[];contUsed=true;state='run';
       $('ov').classList.add('hide');hud();
       setStatus('Segunda oportunidad: sigues desde antes del último disparo.');
     },function(msg){$('adMsg').textContent=msg;});
   }
   $('ovS').addEventListener('click',function(e){
+    var ls=e.target.closest&&e.target.closest('[data-ls]');
+    if(ls){campPlayS(+ls.dataset.ls);return;}
     var t=e.target;if(!t||!t.id)return;
     if(t.id==='adStart')watchStart();
-    else if(t.id==='plain')start(5);
+    else if(t.id==='plain'){campS=null;start(5);renderGoalS();}
     else if(t.id==='adCont')watchCont();
     else if(t.id==='newg')offerStart();
+    else if(t.id==='lvNext')campPlayS(campSIdx+1);
+    else if(t.id==='lvRetry')campPlayS(campSIdx);
+    else if(t.id==='lvList')showLevelsS();
+    else if(t.id==='lvFree'){campS=null;offerStart();}
   });
+  $('btnLvlS').addEventListener('click',showLevelsS);
   function sendScore(sc){
     var is='';try{is=sessionStorage.getItem('xl_init')||'';}catch(e){}
     if(!is){setStatus('Modo práctica: abre el juego desde la app para contar en el ranking.');return;}
@@ -267,7 +320,7 @@ canvas{display:block}
       .catch(function(e){setStatus('Sin conexión: esta partida no se guardó. ('+(e&&e.message?e.message:'error')+')');});
   }
   function finish(){
-    if(state==='over')return;state='over';bullet=null;beep(110,.5,'sawtooth',.07);
+    if(state==='over')return;if(campS){campSLose();return;}state='over';bullet=null;beep(110,.5,'sawtooth',.07);
     var nb=score>best;if(nb){best=score;try{localStorage.setItem('xl_sh_best',String(best));}catch(e){}}
     sendScore(score);
     $('ovT').textContent=nb?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('ovI').textContent='Mejor puntuación: '+best;
@@ -341,7 +394,7 @@ canvas{display:block}
   window.addEventListener('resize',function(){resize();});
   function paintId(o){try{var xp=o.xp||0,ri=XLUI.rankIdx(xp);$('mAv').innerHTML=XLUI.avatar(o.emblem||'xl',o.frame||'green',50,o.item);$('mName').textContent=o.name||'JUGADOR';$('mRank').innerHTML=XLUI.rankSvg(ri,16)+' <small>'+XLUI.RN[ri]+'</small>';}catch(e){}}
   var cached=null;try{cached=JSON.parse(localStorage.getItem('xl_avatar')||'null');}catch(e){}paintId(cached||{emblem:'xl',frame:'green',name:'JUGADOR',xp:0});
-  resize();fillRows(5);cur=pickColor();nxt=pickColor();hud();raf=requestAnimationFrame(loop);offerStart();
+  resize();fillRows(5);cur=pickColor();nxt=pickColor();hud();raf=requestAnimationFrame(loop);offerStart();renderGoalS();
 })();
 </script>
 </body>
