@@ -404,7 +404,7 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     <p class="f-desc">Ropa deportiva táctica, ciberseguridad e integración Web3 de alto rendimiento.</p>
     <div class="f-cols">
       <div><h4>Ecosistema</h4>
-        <div class="f-links"><a href="https://xinergylabs.store" target="_blank" rel="noopener">Tienda Oficial</a></div></div>
+        <div class="f-links"><a href="https://xinergylabs.store" target="_blank" rel="noopener">Tienda Oficial</a><a href="#" id="igLink" style="margin-left:12px">Instagram</a></div></div>
       <div><h4>Comunidad</h4>
         <div class="f-links">
           <a class="tg" href="https://t.me/xinergylabs" target="_blank" rel="noopener">Telegram</a>
@@ -659,6 +659,8 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
       MANUAL_SHOP_URL='https://xinergylabs.store/products/heavy-load-protocol';
   if(MANUAL_SHOW)$('manualCard').style.display='';
   function openExt(u){if(tg&&tg.openLink)tg.openLink(u);else window.open(u,'_blank');}
+  document.getElementById('igLink').addEventListener('click',function(e){e.preventDefault();openExt('https://www.instagram.com/xinergylabs');});
+
   if(!MANUAL_LIVE){$('btnManPrev').disabled=true;$('btnManBuy').disabled=true;$('manBadge').style.display='';}
   else{$('btnManPrev').addEventListener('click',function(){
     var i=0;(function next(){if(i>=MANUAL_PREVIEW_URLS.length){showToast('No encuentro la vista previa. Súbela al repositorio como Heavy-Load-Protocol-Preview.pdf',5000);return;}
