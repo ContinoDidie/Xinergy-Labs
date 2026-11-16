@@ -189,7 +189,7 @@ b{font-family:var(--head)}
 
   // ===== ANUNCIOS (AdsGram) =====
   var ADSGRAM_BLOCK_ID='54913',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
-  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v29';}catch(e){}}
+  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v30';}catch(e){}}
   function adUi(){var ok=adsLeft>0;$('adBtn').style.display=(ok&&!over)?'':'none';$('adBtn2').style.display=(ok&&over)?'':'none';try{$('adSmall').textContent='+4 mov ('+adsLeft+')';}catch(e){}}
   function initAds(){try{if(window.Adsgram){AdC=window.Adsgram.init(adTest?{blockId:ADSGRAM_BLOCK_ID,debug:true,debugBannerType:'FullscreenMedia'}:{blockId:ADSGRAM_BLOCK_ID});adMsg='listos'+(adTest?' (modo prueba)':'');}else adMsg='no cargó el SDK';}catch(e){AdC=null;adMsg='error al iniciar';}adStatus();adUi();}
   function getAd(cb){
@@ -240,10 +240,11 @@ b{font-family:var(--head)}
     });
   }
   window.__rewardedAd=rewardedAd;
+  var adBusy=false;
   function watchAd(){
     if(adsLeft<1)return;
-    say('⏳ Cargando anuncio…');
-    rewardedAd(function(){clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');},function(msg){say(msg);});
+    adBusy=true;say('⏳ Cargando anuncio…');
+    rewardedAd(function(){adBusy=false;clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');},function(msg){adBusy=false;say(msg);});
   }
   var N=6,MAXM=25,BASE=['weight','creatine','shaker','gloves','battery'];
   var mult=1,board=[],path=[],drag=false,over=true,moves=MAXM,coins=0,cry=0,pb=0,pe=0,px=0,score=0,best=0,rnd=null,log=[];
@@ -302,7 +303,7 @@ b{font-family:var(--head)}
     over=true;drag=false;clearSel();var rec=score>best;if(rec){best=score;try{localStorage.setItem('xl_ms_best',String(best))}catch(e){}}
     $('sym').textContent=rec?'🏆':'⚡';$('title').textContent=rec?'¡NUEVO RÉCORD!':'PARTIDA TERMINADA';$('again').textContent='Jugar otra vez';$('final').textContent=score;
     $('info').innerHTML='XL: <b>'+coins+'</b> · Cristales: <b>'+cry+'</b> · Mejor: <b>'+best+'</b>';$('ui').classList.add('show');adUi();
-    clearTimeout(flushT);var rm2=$('rankMsg');if(GAME){if(rm2)rm2.textContent='Se guardará en el ranking en unos segundos…';flushT=setTimeout(flushScore,12000);}else if(rm2)rm2.textContent=initStr()?'Esta partida no cuenta para el ranking.':'Modo práctica: no cuenta para el ranking.';
+    clearTimeout(flushT);var rm2=$('rankMsg');if(GAME){if(rm2)rm2.textContent='Se guardará en el ranking en unos segundos…';}else if(rm2)rm2.textContent=initStr()?'Esta partida no cuenta para el ranking.':'Modo práctica: no cuenta para el ranking.';
   }
   function start(seed){mult=1;try{$('multTag').textContent='';}catch(e){}var bt=$('boot');if(bt&&bt.parentNode)bt.parentNode.removeChild(bt);
     rnd=mk(seed!=null?seed:(Date.now()&0x7fffffff));board=[];for(var r=0;r<N;r++){board[r]=[];for(var c=0;c<N;c++)board[r][c]=pick();}
@@ -418,7 +419,7 @@ b{font-family:var(--head)}
   });
   $('again').addEventListener('click',function(){if(camp){campNext();return;}flushScore();openOffer();});
   $('goRank').addEventListener('click',function(){flushScore();setTimeout(function(){location.href='app.html#ranking';},300);});
-  document.addEventListener('visibilitychange',function(){if(document.hidden)flushScore();});window.addEventListener('pagehide',flushScore);$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
+  document.addEventListener('visibilitychange',function(){if(document.hidden&&!adBusy)flushScore();});window.addEventListener('pagehide',function(){if(!adBusy)flushScore();});$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
   $('share').addEventListener('click',function(){
     var link='https://t.me/XinergyLabsbot/app';try{link=localStorage.getItem('xl_link')||link}catch(e){}
     var u='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Hice '+score+' puntos en Match & Synth de Xinergy Labs ⚡ ¿Me superas?');
@@ -437,6 +438,119 @@ b{font-family:var(--head)}
   function paintId(o){try{var xp=o.xp||0,ri=XLUI.rankIdx(xp),av=o.avatar||o;$('mAv').innerHTML=XLUI.avatar(av.emblem||'xl',av.frame||'green',50,av.item);$('mName').textContent=o.name||'JUGADOR';$('mRank').innerHTML=XLUI.rankSvg(ri,16)+' <small>'+XLUI.RN[ri]+'</small>';}catch(e){}}
   (function(){var c=null;try{c=JSON.parse(localStorage.getItem('xl_avatar')||'null');}catch(e){}paintId(c||{emblem:'xl',frame:'green',name:'JUGADOR',xp:0});})();
   openOffer();
+})();
+</script>
+
+<script>
+/* Idioma: español por defecto; inglés si Telegram (o el navegador) está en inglés */
+(function(){
+  var lang=((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user&&Telegram.WebApp.initDataUnsafe.user.language_code)||navigator.language||'es');
+  if(!/^en/i.test(lang))return;
+  var D={
+    'JUGADOR':'PLAYER','MOVIMIENTOS':'MOVES','PAUSA':'PAUSE','FIN':'END','Ranking':'Ranking',
+    'Salir al inicio':'Back to start','Compartir':'Share','Continuar':'Continue','Cerrar':'Close',
+    'Jugar otra vez':'Play again','Jugar sin potenciador':'Play without booster','Jugar':'Play',
+    'Modo libre':'Free mode','NIVELES':'LEVELS','Niveles':'Levels','🗺 Niveles':'🗺 Levels',
+    '← Volver':'← Back','Volver a niveles':'Back to levels','Volver a la app':'Back to app',
+    'POTENCIADOR OPCIONAL':'OPTIONAL BOOSTER','▶ Ver anuncio y activar ×2':'▶ Watch ad to activate ×2',
+    '▶ Continuar +4 mov. (anuncio)':'▶ Continue +4 moves (ad)','▶+4 mov':'▶+4 moves','+4 mov':'+4 moves',
+    'el doble (×2)':'double (×2)','monedas XL y puntos':'XL coins and points',
+    'Mira un anuncio corto y todo lo que sumes en esta partida —':'Watch a short ad and everything you earn in this game —',
+    '— vale':'— got it','Conecta':'Connect','3 o más':'3 or more',
+    'fichas iguales, también en diagonal.':'identical tiles, diagonals included.',
+    '10 básicas o 5 energy = 1 XL · 10 XL = 1 cristal.':'10 basic or 5 energy = 1 XL · 10 XL = 1 crystal.',
+    'Básicas ×10 = 1 XL · Energy ×5 = 1 XL · XL ×10 = 1 cristal':'Basic ×10 = 1 XL · Energy ×5 = 1 XL · XL ×10 = 1 crystal',
+    'Fichas básicas:':'Basic tiles:',
+    'Los anuncios son opcionales. Las monedas y los cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.':'Ads are optional. Coins and crystals belong to the game: they are not a token and have no value outside Xinergy Labs.',
+    '⏳ Iniciando el juego… (si esto no desaparece, el código no se está ejecutando)':'⏳ Starting the game… (if this does not go away, the code is not running)',
+    '⏳ Cargando anuncio…':'⏳ Loading ad…','Cargando anuncio…':'Loading ad…',
+    '▶ Anuncio completado:':'▶ Ad completed:','+4 movimientos':'+4 moves',
+    'Potenciador ×2 activo':'×2 booster active',': monedas XL y puntos valen el doble.':': XL coins and points are doubled.',
+    'Nació una ficha XL':'An XL tile was created','¡CRISTAL!':'CRYSTAL!',
+    '🔀 Sin jugadas: se mezcló el tablero.':'🔀 No moves: the board was shuffled.',
+    '¡NUEVO RÉCORD!':'NEW RECORD!','PARTIDA TERMINADA':'GAME OVER','Guardando en el ranking…':'Saving to the ranking…',
+    '✓ Puntuación guardada en el ranking.':'✓ Score saved to the ranking.',
+    'Sin conexión con el ranking: esta partida no contará.':'No connection to the ranking: this game will not count.',
+    'Esta partida no contará para el ranking.':'This game will not count for the ranking.',
+    'Esta partida no cuenta para el ranking.':'This game will not count for the ranking.',
+    'partidas diarias con ranking.':'daily ranked games.',
+    'Modo práctica: no cuenta para el ranking.':'Practice mode: does not count for the ranking.',
+    'Modo práctica: abre el juego desde la app para entrar al ranking.':'Practice mode: open the game from the app to enter the ranking.',
+    'Acepta las reglas en la app para entrar al ranking.':'Accept the rules in the app to enter the ranking.',
+    'Completa la verificación en la app para entrar al ranking.':'Complete verification in the app to enter the ranking.',
+    'No se pudo guardar en el ranking (sin conexión).':'Could not save to the ranking (no connection).',
+    'No se pudo validar esta partida para el ranking.':'This game could not be validated for the ranking.',
+    'Conectando con el ranking…':'Connecting to the ranking…','Se guardará en el ranking en unos segundos…':'It will be saved to the ranking in a few seconds…',
+    'Debes ver el anuncio completo.':'You must watch the full ad.',
+    'El anuncio tardó demasiado. Puedes jugar normal.':'The ad took too long. You can play normally.',
+    'No hay anuncio disponible ahora. Puedes jugar normal.':'No ad available right now. You can play normally.',
+    'No se pudo cargar el anuncio. Puedes jugar normal.':'The ad could not be loaded. You can play normally.',
+    'AdsGram no cargó':'AdsGram did not load','Monetag intersticial sin anuncio':'Monetag interstitial: no ad',
+    'Monetag popup sin anuncio':'Monetag popup: no ad','no cargó el SDK':'SDK did not load',
+    'no cargó el SDK (red bloqueada)':'SDK did not load (network blocked)',
+    'cargando el servicio de anuncios…':'loading the ad service…','se cargan al pulsar el botón':'load when the button is pressed','sin sesión':'no session',
+    'NIVEL NO SUPERADO':'LEVEL NOT PASSED','Reintentar nivel':'Retry level','Siguiente nivel':'Next level',
+    'Siguiente nivel desbloqueado':'Next level unlocked','Nivel siguiente desbloqueado':'Next level unlocked',
+    '¡Completaste la campaña!':'You completed the campaign!','¡Campaña completada!':'Campaign completed!',
+    'Modo libre · sin objetivo':'Free mode · no goal','· movimientos:':'· moves:','· tiros:':'· shots:',
+    'COMBO':'COMBO','MEJOR':'BEST','PUNTOS':'POINTS','SHOOTER':'SHOOTER',
+    'Apunta con el dedo y suelta para disparar. Junta 3 o más del mismo color. Toca la ficha de abajo a la izquierda para cambiarla.':'Aim with your finger and release to shoot. Group 3 or more tiles of the same color. Tap the tile at the bottom left to swap it.',
+    'Cada 9 disparos baja una fila, aunque aciertes. Si las fichas llegan a la línea roja, termina la partida.':'Every 9 shots a row drops, even if you hit. If the tiles reach the red line, the game ends.',
+    'Tu mejor marca cuenta en el ranking general, con tope de 1.000 puntos. El bote del mes solo usa Match & Synth.':'Your best score counts in the overall ranking, capped at 1,000 points. The monthly pot only uses Match & Synth.',
+    'Opcional: mira un anuncio y empiezas con 3 filas menos de presión.':'Optional: watch an ad and start with 3 fewer rows of pressure.',
+    'Supera un nivel para desbloquear el siguiente.':'Beat a level to unlock the next one.',
+    'Segunda oportunidad: sigues desde antes del último disparo.':'Second chance: you continue from before your last shot.',
+    'Tu partida está en pausa.':'Your game is paused.','Puntuación no válida.':'Invalid score.',
+    'Tu cuenta está en revisión.':'Your account is under review.','No se pudo guardar. Inténtalo de nuevo.':'Could not save. Try again.',
+    'No se guardó:':'Not saved:','Sin conexión: esta partida no se guardó. (':'No connection: this game was not saved. (',
+    '▶ Ver anuncio · empezar con 3 filas menos':'▶ Watch ad · start with 3 fewer rows','▶ Ver anuncio: una oportunidad más':'▶ Watch ad: one more chance',
+    'Monedas XL':'XL coins','Jugar normal':'Play normally',
+    'Verde neón':'Neon green','Púrpura':'Purple','CAPITÁN':'CAPTAIN','Vanguardia':'Vanguard','Redes':'Networks','Éter':'Ether','Yermo':'Wasteland','Élite':'Elite'
+  };
+  var NAMES={'pesa':'weight','creatina':'creatine','shaker':'shaker','guantes':'gloves','energy':'energy','verde':'green','cian':'cyan','morado':'purple','naranja':'orange','rojo':'red'};
+  function goal(s){
+    var m;
+    if(m=s.match(/^Reúne (\d+) monedas XL$/))return 'Collect '+m[1]+' XL coins';
+    if(m=s.match(/^Crea (\d+) cristales?$/))return 'Create '+m[1]+(m[1]==='1'?' crystal':' crystals');
+    if(m=s.match(/^Llega a (\d+) puntos$/))return 'Reach '+m[1]+' points';
+    if(m=s.match(/^Elimina (\d+) fichas (?:de )?(.+)$/))return 'Remove '+m[1]+' '+(NAMES[m[2]]||m[2])+' tiles';
+    return null;
+  }
+  var R=[
+    [/^Reúne \d+ monedas XL$|^Crea \d+ cristales?$|^Llega a \d+ puntos$|^Elimina \d+ fichas (?:de )?.+$/,function(k){return goal(k);}],
+    [/^Nivel (\d+)$/,function(k,a){return 'Level '+a;}],
+    [/^NIVEL (\d+) SUPERADO$/,function(k,a){return 'LEVEL '+a+' PASSED';}],
+    [/^Te faltó: (.*)\. Inténtalo otra vez\.$/,function(k,a){return 'Missing: '+(goal(a)||a)+'. Try again.';}],
+    [/^Mejor puntuación: (\d+)$/,function(k,a){return 'Best score: '+a;}],
+    [/^✓ Guardada en el ranking del mes · tu mejor: (.+)$/,function(k,a){return "✓ Saved in this month's ranking · your best: "+a;}],
+    [/^Esta partida no suma al ranking: ya jugaste las (\d+) partidas diarias con ranking\.$/,function(k,a){return 'This game does not count: you already played the '+a+' daily ranked games.';}],
+    [/^Monetag no cargó: (.*)$/,function(k,a){return 'Monetag did not load: '+a;}],
+    [/^Anuncios: se cargan al pulsar el botón · (v\d+)$/,function(k,a){return 'Ads: load when the button is pressed · '+a;}],
+    [/^Reuniste (\d+) fichas XL\.$/,function(k,a){return 'You collected '+a+' XL tiles.';}],
+    [/^·\s*(.+?)\s*·\s*movimientos:$/,function(k,a){return '· '+(goal(a)||a)+' · moves:';}],
+    [/^·\s*(.+?)\s*·\s*tiros:$/,function(k,a){return '· '+(goal(a)||a)+' · shots:';}],
+    [/^Nivel (\d+) · (.+)$/,function(k,a,b){return 'Level '+a+' · '+(goal(b)||b);}]
+  ];
+  function tr(s){
+    var k=s.trim(); if(!k)return s;
+    if(Object.prototype.hasOwnProperty.call(D,k))return s.replace(k,D[k]);
+    for(var i=0;i<R.length;i++){var m=k.match(R[i][0]);if(m){var out=R[i][1].apply(null,m);if(out)return s.replace(k,out);}}
+    return s;
+  }
+  function walk(root){
+    var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null),n;
+    while((n=w.nextNode())){var p=n.parentNode;if(p&&(p.tagName==='SCRIPT'||p.tagName==='STYLE'))continue;var t=tr(n.nodeValue);if(t!==n.nodeValue)n.nodeValue=t;}
+  }
+  function start(){
+    walk(document.body);
+    new MutationObserver(function(ms){ms.forEach(function(m){
+      if(m.type==='characterData'){var t=tr(m.target.nodeValue);if(t!==m.target.nodeValue)m.target.nodeValue=t;}
+      m.addedNodes.forEach(function(nd){if(nd.nodeType===3){var t=tr(nd.nodeValue);if(t!==nd.nodeValue)nd.nodeValue=t;}else if(nd.nodeType===1)walk(nd);});
+    });}).observe(document.body,{childList:true,subtree:true,characterData:true});
+    document.documentElement.lang='en';
+  }
+  window.xlTr=tr;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start);else start();
 })();
 </script>
 </body>
