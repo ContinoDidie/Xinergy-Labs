@@ -189,7 +189,7 @@ b{font-family:var(--head)}
 
   // ===== ANUNCIOS (AdsGram) =====
   var ADSGRAM_BLOCK_ID='54913',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
-  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v33';}catch(e){}}
+  function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v35';}catch(e){}}
   function adUi(){var ok=adsLeft>0;$('adBtn').style.display=(ok&&!over)?'':'none';$('adBtn2').style.display=(ok&&over)?'':'none';try{$('adSmall').textContent='+4 mov ('+adsLeft+')';}catch(e){}}
   function initAds(){try{if(window.Adsgram){AdC=window.Adsgram.init(adTest?{blockId:ADSGRAM_BLOCK_ID,debug:true,debugBannerType:'FullscreenMedia'}:{blockId:ADSGRAM_BLOCK_ID});adMsg='listos'+(adTest?' (modo prueba)':'');}else adMsg='no cargó el SDK';}catch(e){AdC=null;adMsg='error al iniciar';}adStatus();adUi();}
   function getAd(cb){
@@ -224,8 +224,8 @@ b{font-family:var(--head)}
     var fb=function(){
       loadMonetag().then(function(show){
         show().then(function(){onOk();}).catch(function(){
-          why.push('Monetag intersticial sin anuncio');
-          show('pop').then(function(){onOk();}).catch(function(){why.push('Monetag popup sin anuncio');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
+          why.push('Monetag sin anuncio');
+          onFail('No hay anuncio disponible ahora. Puedes jugar normal.');
         });
       }).catch(function(e){why.push('Monetag no cargó: '+(e&&e.message?e.message:'red'));onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
@@ -240,6 +240,7 @@ b{font-family:var(--head)}
     });
   }
   window.__rewardedAd=rewardedAd;
+  window.__flushNow=flushScore;
   window.__preloadAds=function(){try{loadMonetag().catch(function(){});getAd(function(){});}catch(e){}};
   var adBusy=false;
   function watchAd(){
@@ -420,7 +421,7 @@ b{font-family:var(--head)}
   });
   $('again').addEventListener('click',function(){if(camp){campNext();return;}flushScore();openOffer();});
   $('goRank').addEventListener('click',function(){flushScore();setTimeout(function(){location.href='app.html#ranking';},300);});
-  document.addEventListener('visibilitychange',function(){if(document.hidden&&!adBusy)flushScore();});window.addEventListener('pagehide',function(){if(!adBusy)flushScore();});$('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
+  $('adBtn').addEventListener('click',watchAd);$('adBtn2').addEventListener('click',watchAd);
   $('share').addEventListener('click',function(){
     var link='https://t.me/XinergyLabsbot/app';try{link=localStorage.getItem('xl_link')||link}catch(e){}
     var u='https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent('Hice '+score+' puntos en Match & Synth de Xinergy Labs ⚡ ¿Me superas?');
@@ -563,12 +564,14 @@ b{font-family:var(--head)}
   setTimeout(function(){if(window.__preloadAds)window.__preloadAds();},1500);
   try{tg.ready();tg.expand();}catch(e){}
   var top=((tg.contentSafeAreaInset&&tg.contentSafeAreaInset.top)||0)+((tg.safeAreaInset&&tg.safeAreaInset.top)||0);
-  document.body.style.paddingTop=(top||60)+'px';
+  top=Math.max(top,96);
+  document.body.style.paddingTop=top+'px';
   var back=document.querySelector('a.back');
   if(back){
-    back.style.position='relative';back.style.zIndex='50';
+    back.style.position='fixed';back.style.top=(top+4)+'px';back.style.left='10px';back.style.zIndex='200';back.style.background='rgba(5,7,11,.9)';back.style.borderRadius='10px';back.style.padding='6px 10px';
     back.addEventListener('click',function(e){
       e.preventDefault();
+      if(window.__flushNow)window.__flushNow();
       if(tg.openTelegramLink){
         tg.openTelegramLink('https://t.me/XinergyLabsbot/app');
       }else{
