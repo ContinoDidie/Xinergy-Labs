@@ -239,6 +239,8 @@ canvas{display:block}
     });
   }
   window.__rewardedAd=rewardedAd;
+  window.__preloadAds=function(){try{loadMonetag().catch(function(){});getAd(function(){});}catch(e){}};
+  setTimeout(function(){window.__preloadAds();},1500);
   function showAd(onOk,onFail){ rewardedAd(onOk,onFail); }
   // ===== Campaña del Shooter: 20 niveles con tiros limitados y objetivo =====
   var CAMPS=[];
