@@ -343,25 +343,31 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
   <button class="gtab" id="tabShooter">X-SHOOTER</button>
   <button class="gtab" id="tabGenesis">GENESIS</button>
 </nav>
+<div id="gameStage">
   <section class="card" id="msCard">
+<small id="runBest" style="display:none">0 m</small>
     <div class="card-head"><h2>Match &amp; Synth</h2></div>
     <p class="muted">Conecta shakers, pesas, baterías y monedas XL. Con 10 monedas creas un cristal. Las monedas y cristales son del juego: no son un token ni tienen valor fuera de Xinergy Labs.</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="msBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="msOpen" style="padding:11px 18px">▶ Jugar</button></div>
   </section>
 
-    <section class="card" id="shCard">
+    <section class="card" id="shCard" style="display:none">
     <div class="card-head"><h2>Xinergy Shooter</h2><span class="soon-badge">PRÁCTICA</span></div>
     <p class="muted">Apunta y dispara fichas de colores: junta 3 o más para explotarlas y suelta las que cuelgan para sumar combos. Por ahora no cuenta para el ranking ni para el bote.</p>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="muted">Tu mejor marca: <b id="shBest" style="color:var(--text)">0</b></span><button class="btn-mini" id="shOpen" style="padding:11px 18px">▶ Jugar</button></div>
   </section>
-
-  <section class="gn-card gn-energy"><div class="gn-eyebrow">GENESIS ENERGY</div><div class="gn-energy-row"><div class="gn-amount">1.240</div><div class="gn-delta">+90 ESTA SEMANA</div></div><div class="gn-progress"><span></span></div><div class="gn-progress-meta"><span>PIONEER · RANGO ACTUAL</span><span>760 para ELITE</span></div></section>
+</section>
+<div id="genesisPanel" class="gn-wrap" style="display:none">
+<div class="gn-heading"><h1>GENESIS</h1><div class="gn-season">SEASON 01 · NOVIEMBRE</div></div>
+<section class="gn-card gn-station"><div class="gn-station-head">ESTACIÓN GENESIS // 01</div><div class="gn-station-state">● ONLINE</div><div class="gn-machine gn-m1"><b>◉ EXTRACTOR</b><small>NIVEL 1 · ACTIVO</small></div><div class="gn-machine gn-m2"><b>◉ REACTOR</b><small>NIVEL 2 · ACTIVO</small></div><div class="gn-machine gn-m3 gn-locked"><b>QUANTUM</b><small>🔒 RANGO ELITE</small></div><div class="gn-machine gn-m4 gn-locked"><b>OVERDRIVE</b><small>🔒 RANGO LEGEND</small></div><div class="gn-core-wrap"><div class="gn-core-glow"></div><div class="gn-ring"></div><div class="gn-ring gn-r2"></div><div class="gn-core">CORE</div></div><div class="gn-station-foot">ENERGY SYSTEM · SYNCHRONIZED</div></section>
+<section class="gn-card gn-energy"><div class="gn-eyebrow">GENESIS ENERGY</div><div class="gn-energy-row"><div class="gn-amount">1.240</div><div class="gn-delta">+90 ESTA SEMANA</div></div><div class="gn-progress"><span></span></div><div class="gn-progress-meta"><span>PIONEER · RANGO ACTUAL</span><span>760 para ELITE</span></div></section>
 <section class="gn-card gn-section"><h2 class="gn-section-title">MÁQUINAS Y MEJORAS</h2><div class="gn-machine-row"><div><div class="gn-machine-name">Energy Extractor</div><div class="gn-machine-desc">Nivel 1 · Estación activa</div></div><button class="gn-action">MEJORADO</button></div><div class="gn-machine-row"><div><div class="gn-machine-name">Quantum Reactor</div><div class="gn-machine-desc">Se desbloquea al alcanzar Elite</div></div><button class="gn-action gn-buy">2.400 XL</button></div><div class="gn-machine-row"><div><div class="gn-machine-name">Genesis Overdrive</div><div class="gn-machine-desc">Requiere rango Legend</div></div><button class="gn-action" disabled>BLOQUEADO</button></div></section>
 <section class="gn-card gn-section"><h2 class="gn-section-title">TU PROGRESO GENESIS</h2><div class="gn-rank-grid"><div class="gn-rank">INITIATE<small>Completado</small></div><div class="gn-rank gn-current">PIONEER<small>Rango actual</small></div><div class="gn-rank">ELITE<small>2.000 energía</small></div><div class="gn-rank">LEGEND<small>5.000 energía</small></div></div></section>
 <section class="gn-card gn-section"><h2 class="gn-section-title">OBTENER ENERGÍA · ACTIVIDADES</h2><p style="margin:6px 0 0;color:#8fa1b5;font-size:13px">Próximamente: partidas válidas, check-in, misiones y referidos darán energía desde el servidor.</p></section>
 <section class="gn-card gn-section"><h2 class="gn-section-title">RANKING GENESIS · TEMPORADA 01</h2><div class="gn-leader"><div><span class="gn-place">01</span>TÚ</div><div class="gn-score">1.240</div></div><div class="gn-leader"><div><span class="gn-place">02</span>Jugador 2</div><div class="gn-score">980</div></div><div class="gn-leader"><div><span class="gn-place">03</span>Jugador 3</div><div class="gn-score">845</div></div></section>
 <section class="gn-card gn-section"><h2 class="gn-section-title">ACTIVIDAD RECIENTE</h2><div><div class="gn-history"><span>Partida válida · Match &amp; Synth</span><small>+30 GEN</small></div><div class="gn-history"><span>Check-in diario</span><small>+10 GEN</small></div><div class="gn-history"><span>Misión completada</span><small>+50 GEN</small></div></div></section><div class="gn-notice"><b>AVISO:</b> Genesis Energy es una unidad interna de participación. No es un token, no tiene valor monetario, no se puede cambiar por dinero y no garantiza una futura asignación de $XLABS.</div>
-</section>
+</div>
+</div>
 <section class="card" id="rankCard">
     <div class="card-head"><h2>Ranking del mes</h2><span class="muted" id="rkSeason"></span></div>
     <div class="link-box" id="rkPool" style="color:var(--text)">Cargando…</div>
@@ -377,7 +383,6 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     </div>
   </section>
 
-  <section class="card" id="genesisCard"><div class="mission"><div><b>GENESIS</b><small>Estación de energía · datos de ejemplo</small></div><div class="m-act"><button class="btn-mini" id="btnGenesisOpen">Abrir</button></div><small id="runBest" style="display:none">0 m</small></div></section>
 
   <section class="card" id="manualCard" style="display:none">
     <div class="card-head"><h2>Manual de entrenamiento</h2><span class="soon-badge" id="manBadge" style="display:none">PRÓXIMAMENTE</span></div>
@@ -1116,12 +1121,17 @@ h1.neon{font-size:clamp(2rem,11vw,2.7rem);line-height:1.04}
     try{tg&&tg.enableVerticalSwipes&&tg.enableVerticalSwipes()}catch(e){}
   }
   window.addEventListener('resize',function(){if(modal.style.display!=='none')resize();});
-  // ---- Pestañas de juegos: abren cada pantalla igual que las tarjetas ----
-  function xlOpen(u){if(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData)location.href=u;else window.open(u,'_blank');}
-  document.getElementById('tabMatch').addEventListener('click',function(){xlOpen('match.html?v=22');});
-  document.getElementById('tabShooter').addEventListener('click',function(){xlOpen('shooter.html?v=2');});
-  document.getElementById('tabGenesis').addEventListener('click',function(){xlOpen('genesis.html');});
-  $('btnGenesisOpen').addEventListener('click',function(){if(!!(window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData))location.href='genesis.html';else window.open('genesis.html','_blank');});
+  // ---- Pestañas de juegos: cambian lo que se muestra debajo ----
+  function xlShowGame(which){
+    var show={match:'msCard',shooter:'shCard',genesis:'genesisPanel'}[which];
+    ['msCard','shCard','genesisPanel'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display=(id===show)?'':'none';});
+    ['tabMatch','tabShooter','tabGenesis'].forEach(function(id){var b=document.getElementById(id);if(b)b.classList.toggle('on',id===({match:'tabMatch',shooter:'tabShooter',genesis:'tabGenesis'})[which]);});
+  }
+  document.getElementById('tabMatch').addEventListener('click',function(){xlShowGame('match');});
+  document.getElementById('tabShooter').addEventListener('click',function(){xlShowGame('shooter');});
+  document.getElementById('tabGenesis').addEventListener('click',function(){xlShowGame('genesis');});
+  xlShowGame('match');
+
   $('runStart').addEventListener('click',start);
   $('runClose').addEventListener('click',closeGame);
   var sb=$('runSnd');function sndLabel(){sb.textContent=soundOn?'🔊 Sonido':'🔇 Sin sonido';}
