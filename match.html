@@ -108,7 +108,7 @@ b{font-family:var(--head)}
       <svg id="svg"><polyline id="line" points=""/></svg>
       <div id="grid"></div>
       <div class="ui" id="ui"><div style="font-size:26px" id="sym">⚡</div><h2 class="grad" id="title">FIN</h2><div class="big" id="final">0</div><div class="info" id="info"></div><div class="info" id="rankMsg" style="font-size:.8rem;color:#8fd;min-height:1.2em"></div>
-        <button class="btn ad" id="adBtn2" style="display:none">▶ Continuar +4 mov. (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><div class="rowb"><button class="btn s" id="share">Compartir</button><button class="btn s" id="goRank">Ranking</button></div></div>
+        <p id="endMsg" style="font-size:.78rem;color:#cfe;min-height:1em;margin:6px 0 0"></p><button class="btn ad" id="adBtn2" style="display:none">▶ Continuar +4 mov. (anuncio)</button><button class="btn p" id="again">Jugar otra vez</button><div class="rowb"><button class="btn s" id="share">Compartir</button><button class="btn s" id="goRank">Ranking</button></div></div>
       <div class="ui" id="lvl"><h2 class="grad">NIVELES</h2><div class="lvgrid" id="lvlGrid"></div><button class="btn s" id="lvlFree" style="margin-top:6px">Modo libre</button><button class="btn s" id="lvlClose">Cerrar</button></div>
       <div class="ui" id="pre"><div style="font-size:26px">⚡</div><h2 class="grad">POTENCIADOR OPCIONAL</h2>
         <div class="info">Mira un anuncio corto y todo lo que sumes en esta partida —<b>monedas XL y puntos</b>— vale <b style="color:#00ff66">el doble (×2)</b>.</div>
@@ -219,23 +219,25 @@ b{font-family:var(--head)}
   }
   var adsgramOff=false; /* AdsGram primero; Monetag como respaldo */
   function rewardedAd(onOk0,onFail0){
-    var fin=false,why=[],tm=setTimeout(function(){if(!fin){fin=true;onFail0('El anuncio tardó demasiado. Puedes jugar normal.');}},12000);
+    var fin=false,why=[],tm=null;
     var onOk=function(){if(fin)return;fin=true;clearTimeout(tm);onOk0();};
     var onFail=function(msg){if(fin)return;fin=true;clearTimeout(tm);onFail0(msg+(why.length?' ['+why.join(' · ')+']':''));};
+    tm=setTimeout(function(){onFail('El anuncio tardó demasiado. Puedes jugar normal.');},12000);
+    /* en cuanto el anuncio empieza a mostrarse, ya no cuenta el tiempo de carga: solo un margen de 60 s */
+    var shown=function(){clearTimeout(tm);tm=setTimeout(function(){why.push('sin respuesta del anuncio');onFail('El anuncio tardó demasiado. Puedes jugar normal.');},60000);};
     var fb=function(){
       loadMonetag().then(function(show){
-        var sh,t2=setTimeout(function(){why.push('Monetag no respondió en 6 s');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');},6000);
-        try{sh=show();}catch(err){clearTimeout(t2);why.push('Monetag error');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');return;}
-        sh.then(function(){clearTimeout(t2);onOk();}).catch(function(){
-          clearTimeout(t2);why.push('Monetag sin anuncio');
-          onFail('No hay anuncio disponible ahora. Puedes jugar normal.');
-        });
+        shown();
+        var sh;try{sh=show();}catch(err){why.push('Monetag error');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');return;}
+        sh.then(function(){onOk();}).catch(function(){why.push('Monetag sin anuncio');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
       }).catch(function(e){why.push('Monetag no cargó: '+(e&&e.message?e.message:'red'));onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
     if(adsgramOff){why.push('AdsGram inactivo');fb();return;}
     getAd(function(ctl){
       if(!ctl){adsgramOff=true;why.push('AdsGram no cargó');fb();return;}
-      try{ctl.show().then(function(r){
+      try{
+        shown();
+        ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
         }).catch(function(e){adsgramOff=true;why.push('AdsGram: '+(e&&e.description?e.description:'error'));fb();});
@@ -249,7 +251,8 @@ b{font-family:var(--head)}
   function watchAd(){
     if(adsLeft<1)return;
     adBusy=true;say('⏳ Cargando anuncio…');
-    rewardedAd(function(){adBusy=false;clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');},function(msg){adBusy=false;say(msg);});
+    var eM=document.getElementById('endMsg');if(eM)eM.textContent='⏳ Cargando anuncio…';
+    rewardedAd(function(){adBusy=false;clearTimeout(flushT);adsLeft--;moves+=4;if(over){over=false;$('ui').classList.remove('show');}hud();adUi();say('▶ Anuncio completado: <strong>+4 movimientos</strong>.');if(eM)eM.textContent='';},function(msg){adBusy=false;say(msg);if(eM)eM.textContent=msg;});
   }
   var N=6,MAXM=25,BASE=['weight','creatine','shaker','gloves','battery'];
   var mult=1,board=[],path=[],drag=false,over=true,moves=MAXM,coins=0,cry=0,pb=0,pe=0,px=0,score=0,best=0,rnd=null,log=[];
@@ -449,7 +452,7 @@ b{font-family:var(--head)}
 <script>
 /* Idioma: español por defecto; inglés si Telegram (o el navegador) está en inglés */
 (function(){
-  var lang=((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user&&Telegram.WebApp.initDataUnsafe.user.language_code)||navigator.language||'es');
+  var lang=(new URLSearchParams(location.search).get('lang'))||((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user&&Telegram.WebApp.initDataUnsafe.user.language_code)||navigator.language||'es');
   if(!/^en/i.test(lang))return;
   var D={
     'JUGADOR':'PLAYER','MOVIMIENTOS':'MOVES','PAUSA':'PAUSE','FIN':'END','Ranking':'Ranking',
