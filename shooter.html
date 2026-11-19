@@ -222,23 +222,25 @@ canvas{display:block}
   }
   var adsgramOff=false; /* AdsGram primero; Monetag como respaldo */
   function rewardedAd(onOk0,onFail0){
-    var fin=false,why=[],tm=setTimeout(function(){if(!fin){fin=true;onFail0('El anuncio tardó demasiado. Puedes jugar normal.');}},12000);
+    var fin=false,why=[],tm=null;
     var onOk=function(){if(fin)return;fin=true;clearTimeout(tm);onOk0();};
     var onFail=function(msg){if(fin)return;fin=true;clearTimeout(tm);onFail0(msg+(why.length?' ['+why.join(' · ')+']':''));};
+    tm=setTimeout(function(){onFail('El anuncio tardó demasiado. Puedes jugar normal.');},12000);
+    /* en cuanto el anuncio empieza a mostrarse, ya no cuenta el tiempo de carga: solo un margen de 60 s */
+    var shown=function(){clearTimeout(tm);tm=setTimeout(function(){why.push('sin respuesta del anuncio');onFail('El anuncio tardó demasiado. Puedes jugar normal.');},60000);};
     var fb=function(){
       loadMonetag().then(function(show){
-        var sh,t2=setTimeout(function(){why.push('Monetag no respondió en 6 s');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');},6000);
-        try{sh=show();}catch(err){clearTimeout(t2);why.push('Monetag error');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');return;}
-        sh.then(function(){clearTimeout(t2);onOk();}).catch(function(){
-          clearTimeout(t2);why.push('Monetag sin anuncio');
-          onFail('No hay anuncio disponible ahora. Puedes jugar normal.');
-        });
+        shown();
+        var sh;try{sh=show();}catch(err){why.push('Monetag error');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');return;}
+        sh.then(function(){onOk();}).catch(function(){why.push('Monetag sin anuncio');onFail('No hay anuncio disponible ahora. Puedes jugar normal.');});
       }).catch(function(e){why.push('Monetag no cargó: '+(e&&e.message?e.message:'red'));onFail('No se pudo cargar el anuncio. Puedes jugar normal.');});
     };
     if(adsgramOff){why.push('AdsGram inactivo');fb();return;}
     getAd(function(ctl){
       if(!ctl){adsgramOff=true;why.push('AdsGram no cargó');fb();return;}
-      try{ctl.show().then(function(r){
+      try{
+        shown();
+        ctl.show().then(function(r){
           if(r&&r.done===false){onFail('Debes ver el anuncio completo.');return;}
           onOk();
         }).catch(function(e){adsgramOff=true;why.push('AdsGram: '+(e&&e.description?e.description:'error'));fb();});
@@ -423,7 +425,7 @@ canvas{display:block}
 <script>
 /* Idioma: español por defecto; inglés si Telegram (o el navegador) está en inglés */
 (function(){
-  var lang=((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user&&Telegram.WebApp.initDataUnsafe.user.language_code)||navigator.language||'es');
+  var lang=(new URLSearchParams(location.search).get('lang'))||((window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initDataUnsafe&&Telegram.WebApp.initDataUnsafe.user&&Telegram.WebApp.initDataUnsafe.user.language_code)||navigator.language||'es');
   if(!/^en/i.test(lang))return;
   var D={
     'JUGADOR':'PLAYER','MOVIMIENTOS':'MOVES','PAUSA':'PAUSE','FIN':'END','Ranking':'Ranking',
