@@ -189,7 +189,7 @@ b{font-family:var(--head)}
   ['shaker','weight','creatine','gloves','battery','xl','crystal'].forEach(function(k){var im=new Image();im.onload=function(){if(im.naturalWidth>1024){FOLDER[k]=2;return;}FOLDER[k]=1;TILE_IMG[k]=im.src;try{if(board.length)render();setImgs();}catch(e){}};im.onerror=function(){FOLDER[k]=0;};im.src='tiles/'+k+'.png?v=12';});
 
   // ===== ANUNCIOS (AdsGram) =====
-  var ADSGRAM_BLOCK_ID='54913',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
+  var ADSGRAM_BLOCK_ID='60801',AdC=null,adsLeft=2,adTest=/[?&]adtest=1/.test(location.search),adMsg='se cargan al pulsar el botón';
   function adStatus(){try{$('adStatus').textContent='Anuncios: '+adMsg+' · v38';}catch(e){}}
   function adUi(){var ok=adsLeft>0;$('adBtn').style.display=(ok&&!over)?'':'none';$('adBtn2').style.display=(ok&&over)?'':'none';try{$('adSmall').textContent='+4 mov ('+adsLeft+')';}catch(e){}}
   function initAds(){try{if(window.Adsgram){AdC=window.Adsgram.init(adTest?{blockId:ADSGRAM_BLOCK_ID,debug:true,debugBannerType:'FullscreenMedia'}:{blockId:ADSGRAM_BLOCK_ID});adMsg='listos'+(adTest?' (modo prueba)':'');}else adMsg='no cargó el SDK';}catch(e){AdC=null;adMsg='error al iniciar';}adStatus();adUi();}
