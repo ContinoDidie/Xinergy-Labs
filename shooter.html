@@ -195,7 +195,7 @@ canvas{display:block}
   var REASON={terms_required:'Acepta las reglas en la app para contar en el ranking.',captcha_required:'Completa la verificación en la app para contar en el ranking.',blocked:'Tu cuenta está en revisión.',invalid:'Puntuación no válida.',error:'No se pudo guardar. Inténtalo de nuevo.'};
 
   // ===== ANUNCIOS (AdsGram) =====
-  var ADS_BLOCK='54913',AdC=null,adsLoading=null;
+  var ADS_BLOCK='60801',AdC=null,adsLoading=null;
   function getAd(cb){
     if(AdC){cb(AdC);return;}
     if(window.Adsgram){try{AdC=window.Adsgram.init({blockId:ADS_BLOCK});cb(AdC);}catch(e){cb(null);}return;}
@@ -297,12 +297,13 @@ canvas{display:block}
     $('ovS').innerHTML='<button class="btn ad" id="adStart">▶ Ver anuncio · empezar con 3 filas menos</button><button class="btn s" id="plain">Jugar normal</button><p id="adMsg" style="font-size:.74rem;color:#9bacc4;min-height:1.2em"></p>';
     $('ov').classList.remove('hide');
   }
+  function setAdMsg(v){var e=document.getElementById('adMsg');if(e)e.textContent=v;}
   function watchStart(){
-    $('adMsg').textContent='Cargando anuncio…';adBusy=true;
-    showAd(function(){adBusy=false;start(3);},function(msg){adBusy=false;$('adMsg').textContent=msg;});
+    setAdMsg('Cargando anuncio…');adBusy=true;
+    showAd(function(){adBusy=false;start(3);},function(msg){adBusy=false;setAdMsg(msg);});
   }
   function watchCont(){
-    $('adMsg').textContent='Cargando anuncio…';adBusy=true;
+    setAdMsg('Cargando anuncio…');adBusy=true;
     showAd(function(){
       adBusy=false;
       var s0=JSON.parse(snap);
@@ -310,7 +311,7 @@ canvas{display:block}
       bullet=null;parts=[];pops=[];contUsed=true;state='run';pendingScore=0;
       $('ov').classList.add('hide');hud();
       setStatus('Segunda oportunidad: sigues desde antes del último disparo.');
-    },function(msg){adBusy=false;$('adMsg').textContent=msg;});
+    },function(msg){adBusy=false;setAdMsg(msg);});
   }
   $('ovS').addEventListener('click',function(e){
     var ls=e.target.closest&&e.target.closest('[data-ls]');
